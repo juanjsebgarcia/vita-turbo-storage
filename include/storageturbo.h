@@ -23,7 +23,7 @@
 
 /* Release version. The .yml module versions carry major.minor (0.1); bump all
  * three together. Logged in both modules' init banner so a log pins the build. */
-#define TS_VERSION_STR    "0.3.0-alpha"
+#define TS_VERSION_STR    "0.3.0"
 
 /* Everything the plugin writes lives here (created on first use). */
 #define TS_DATA_DIR       "ur0:data/turbostorage"
