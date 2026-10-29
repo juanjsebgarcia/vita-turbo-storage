@@ -56,26 +56,33 @@ static const char *const g_keys[TS_KEY_COUNT] = {
 	"<toggle_switch id=\"ts_" k "\" title=\"ts_t_" k "\" icon=\"tex_spanner\" " \
 	"hint=\"ts_h_" k "\" key=\"/CONFIG/TURBOSTOR/" k "\"/>"
 
-static const char X_GROUP[] =
+#define X_HEAD \
 	"<setting_list id=\"turbostorage_settings\" title=\"ts_t_title\" icon=\"tex_spanner\">"
-	ROW_TOGGLE("sd2vita")
-	ROW_TOGGLE("memcard")
-	ROW_TOGGLE("internal")
-	ROW_LIST("hud")
-		ITEM("ts_i_hud0", "0") ITEM("ts_i_hud1", "1") ITEM("ts_i_hud2", "2")
-	"</list>"
-	ROW_LIST("hud_pos")
-		ITEM("ts_i_pos0", "0") ITEM("ts_i_pos1", "1") ITEM("ts_i_pos2", "2") ITEM("ts_i_pos3", "3")
-	"</list>"
-	ROW_TOGGLE("hud_game")
-	ROW_TOGGLE("hud_recent")
-	ROW_TOGGLE("devmode")
-	"</setting_list>";
+/* Only on the page while in safe mode: untick to leave it. */
+#define X_SAFE_ROW \
+	"<toggle_switch id=\"ts_safe_mode\" title=\"ts_t_safe_mode\" icon=\"tex_spanner\" " \
+	"hint=\"ts_h_safe_mode\" key=\"/CONFIG/TURBOSTOR/safe_mode\"/>"
+#define X_ROWS \
+	ROW_TOGGLE("sd2vita") \
+	ROW_TOGGLE("memcard") \
+	ROW_TOGGLE("internal") \
+	ROW_LIST("hud") \
+		ITEM("ts_i_hud0", "0") ITEM("ts_i_hud1", "1") ITEM("ts_i_hud2", "2") \
+	"</list>" \
+	ROW_LIST("hud_pos") \
+		ITEM("ts_i_pos0", "0") ITEM("ts_i_pos1", "1") ITEM("ts_i_pos2", "2") ITEM("ts_i_pos3", "3") \
+	"</list>" \
+	ROW_TOGGLE("hud_game") \
+	ROW_TOGGLE("hud_recent") \
+	ROW_TOGGLE("devmode") \
+	"</setting_list>"
+static const char X_GROUP[]      = X_HEAD X_ROWS;
+static const char X_GROUP_SAFE[] = X_HEAD X_SAFE_ROW X_ROWS;
 
 /* Accept a System page up to this size; leave it alone if it is ever bigger. */
 #define TS_PAGE_ORIG_MAX 16384
 
-static char g_pagebuf[TS_PAGE_ORIG_MAX + sizeof(X_GROUP)];
+static char g_pagebuf[TS_PAGE_ORIG_MAX + sizeof(X_GROUP_SAFE)];
 
 /* ---- text for ids (GetText) -------------------------------------------- */
 
@@ -176,6 +183,10 @@ static const ts_u16 *ts_text(const char *id)
 		return 0;
 	if (s_eqn(id, "ts_t_title", 11))
 		return fixed_text(TS_I18N_TITLE);
+	if (s_eqn(id, "ts_t_safe_mode", 15))
+		return fixed_text(TS_I18N_ROW_SAFE);
+	if (s_eqn(id, "ts_h_safe_mode", 15))
+		return fixed_text(tsSafeMode(TS_SAFE_QUERY) == 2 ? TS_I18N_HINT_SAFE_LEFT : TS_I18N_HINT_SAFE);
 	if (s_pfx(id, "ts_t_") && (k = key_index(id + 5)) >= 0 && k_row[k] >= 0)
 		return fixed_text(k_row[k]);
 	if (s_pfx(id, "ts_h_") && (k = key_index(id + 5)) >= 0 && k_hint[k] >= 0) {
@@ -265,13 +276,14 @@ static int xml_hook(void *out, void *buf, int size, void *a4)
 			return TAI_CONTINUE(int, r_xml, out, buf, size, a4);
 		}
 		const char *ins = system_insert_at(s, size);
-		int gl = (int)sizeof(X_GROUP) - 1;
+		const char *grp = tsSafeMode(TS_SAFE_QUERY) == 1 ? X_GROUP_SAFE : X_GROUP;
+		int gl = s_len(grp);
 		TS_LOGI("[SET] system page (size=%d): insert point %s at %d", size,
 		        ins ? "found" : "NOT found", ins ? (int)(ins - s) : -1);
 		if (ins) {
 			int head = (int)(ins - s);
 			s_cpy(g_pagebuf, s, head);
-			s_cpy(g_pagebuf + head, X_GROUP, gl);
+			s_cpy(g_pagebuf + head, grp, gl);
 			s_cpy(g_pagebuf + head + gl, ins, size - head);
 			buf = g_pagebuf; size = size + gl;
 		}
@@ -282,6 +294,10 @@ static int xml_hook(void *out, void *buf, int size, void *a4)
 /* RegMgr GET/SET/INFO for /CONFIG/TURBOSTOR -> the kernel module. */
 static int get_hook(const char *cat, const char *name, int *val)
 {
+	if (is_ts(cat) && val && name && s_eqn(name, "safe_mode", 10)) {
+		*val = tsSafeMode(TS_SAFE_QUERY) == 1;
+		return 0;
+	}
 	if (is_ts(cat) && val) {
 		TsState st;
 		int k = name ? key_index(name) : -1;
@@ -296,6 +312,11 @@ static int get_hook(const char *cat, const char *name, int *val)
 
 static int set_hook(const char *cat, const char *name, int v)
 {
+	if (is_ts(cat) && name && s_eqn(name, "safe_mode", 10)) {
+		int r = v ? TS_OK : tsSafeMode(TS_SAFE_LEAVE);
+		TS_LOGI("[SET] safe_mode = %d -> %d", v, r);
+		return 0;
+	}
 	if (is_ts(cat)) {
 		int k = name ? key_index(name) : -1;
 		int r = k >= 0 ? tsSetSetting(k, v) : TS_ERR_ARG;

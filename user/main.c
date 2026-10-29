@@ -49,8 +49,10 @@ int module_start(SceSize argc, const void *args)
 	/* The HUD draws over these system screens even with In-game HUD off. */
 	tsHudRegisterProc(in_shell() ? TS_HUD_PROC_SHELL : TS_HUD_PROC_SETTINGS);
 
-	if (in_shell())
+	if (in_shell()) {
+		tsShellUp();                  /* the boot reached SceShell: clears the guard */
 		ts_dispatch_start();          /* deferred; returns immediately */
+	}
 	else
 		ts_settings_hooks_install();
 	return SCE_KERNEL_START_SUCCESS;

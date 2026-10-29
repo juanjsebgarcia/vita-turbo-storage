@@ -367,9 +367,12 @@ make config                   # print the config.txt lines
 
 ## Safety
 
-- **Boot guard.** If a start ever fails to finish, the next boot runs with Turbo
-  Storage inactive (safe mode). Writing `0` to `ur0:data/turbostorage/boot_guard`
-  re-arms it.
+- **Safe mode.** If the Vita restarts or crashes while Turbo Storage is starting
+  (before the Home screen appears), the next boot runs with Turbo Storage inactive,
+  so a problem can never lock you into a boot loop. A *Safe mode* row then appears at
+  the top of *Settings → System → Turbo Storage*: untick it and restart the Vita to
+  turn everything back on. (By hand: write `0` to `ur0:data/turbostorage/boot_guard`.)
+  A normal restart after the Home screen has appeared never triggers it.
 - **Automatic fallback.** Any error on the faster path switches that storage back to
   standard for the session. Switching it off and on in Settings retries.
 - **Firmware check.** On a storage driver it doesn't recognise, Turbo Storage

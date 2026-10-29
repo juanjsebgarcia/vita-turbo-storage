@@ -37,6 +37,7 @@
 
 #define TS_GUARD_PATH  TS_DATA_DIR "/boot_guard"
 #define TS_GUARD_SECS  30
+#define TS_GUARD_SHELL_SECS  5   /* after SceShell starts, clear the guard this soon */
 
 /* Storage driver (SceSdif) module fingerprints of the firmwares this build
  * supports. Its code is identical across all of them; anything else stays
@@ -63,6 +64,9 @@ static volatile int g_run = 1;
 static volatile uint32_t g_uptime;
 
 static char g_guard_txt[48];   /* last content read, for the log */
+static volatile int      g_guard_clear;   /* this start's guard is already back at 0 */
+static volatile uint32_t g_shell_up;      /* worker second SceShell reported up, +1  */
+static volatile int      g_safe_left;     /* safe mode left from Settings this boot  */
 
 /* First byte of the guard file, or 0 if there is none. */
 static char guard_read(void)
@@ -257,8 +261,16 @@ static int worker(SceSize args, void *argp)
 				last_slow = sl;
 			}
 		}
-		if (g_uptime == TS_GUARD_SECS) {
+		/* The boot reached the Home screen (SceShell up), or the plugin has run
+		 * for TS_GUARD_SECS: this start didn't bring the console down. */
+		if (!g_guard_clear && g_shell_up && g_uptime >= g_shell_up - 1 + TS_GUARD_SHELL_SECS) {
+			guard_write('0', "shell");
+			g_guard_clear = 1;
+			TS_KLOGI("SceShell up for %us - boot_guard set to 0", (unsigned)TS_GUARD_SHELL_SECS);
+		}
+		if (!g_guard_clear && g_uptime >= TS_GUARD_SECS) {
 			guard_write('0', "worker");
+			g_guard_clear = 1;
 			TS_KLOGI("stable for %us - boot_guard set to 0", (unsigned)TS_GUARD_SECS);
 		}
 		/* Log a device on any status change, an error or a mismatch at once,
@@ -316,6 +328,37 @@ int tsSelfTestPing(void)
 	return (int)TS_SELFTEST_MAGIC;
 }
 
+/* Safe mode has no worker thread, and a syscall does no file I/O (see
+ * settings.c), so leaving it writes the guard from a one-shot kernel thread. */
+static int safe_leave_thread(SceSize args, void *argp)
+{
+	(void)args; (void)argp;
+	guard_write('0', "settings");
+	TS_KLOGI("safe mode left from Settings - everything installs at the next start");
+	return ksceKernelExitDeleteThread(0);
+}
+
+int tsSafeMode(int op)
+{
+	if (g_disabled != TS_DIS_SAFE)
+		return op == TS_SAFE_QUERY ? 0 : TS_ERR_ARG;
+	if (op == TS_SAFE_LEAVE && !g_safe_left) {
+		SceUID t = ksceKernelCreateThread("SceStorageTurboSafe", safe_leave_thread,
+		                                  0x80, 0x2000, 0, 0, NULL);
+		if (t < 0 || ksceKernelStartThread(t, 0, NULL) < 0)
+			return TS_ERR_NOT_READY;
+		g_safe_left = 1;
+	}
+	return g_safe_left ? 2 : 1;
+}
+
+int tsShellUp(void)
+{
+	if (!g_shell_up)
+		g_shell_up = g_uptime + 1;
+	return TS_OK;
+}
+
 /* Works before the HUD is installed too: only records the pid. */
 int tsHudRegisterProc(int role)
 {
@@ -350,8 +393,10 @@ int module_start(SceSize argc, const void *args)
 	 * before the storage flushes). */
 	if (guard_read() == '1') {
 		g_disabled = TS_DIS_SAFE;
-		TS_KLOGW("boot_guard is 1 [%s] - safe mode, nothing installed (write 0 to "
-		         TS_GUARD_PATH " to retry)", g_guard_txt);
+		TS_KLOGW("safe mode: the last start didn't finish (boot_guard [%s]), so "
+		         "nothing is installed this boot. To leave it, untick Safe mode in "
+		         "Settings > System > Turbo Storage and restart (or write 0 to "
+		         TS_GUARD_PATH ")", g_guard_txt);
 		return SCE_KERNEL_START_SUCCESS;
 	}
 	TS_KLOGI("boot_guard was [%s], setting 1", g_guard_txt);

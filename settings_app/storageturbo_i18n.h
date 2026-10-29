@@ -41,6 +41,9 @@ enum ts_i18n_id {
 	TS_I18N_ST_SAFE,
 	TS_I18N_ST_NO_KERNEL,
 	TS_I18N_ST_SLOW,
+	TS_I18N_ROW_SAFE,           /* "Safe mode" row, only while in safe mode     */
+	TS_I18N_HINT_SAFE,
+	TS_I18N_HINT_SAFE_LEFT,     /* its help once left, until the restart       */
 	TS_I18N_COUNT
 };
 

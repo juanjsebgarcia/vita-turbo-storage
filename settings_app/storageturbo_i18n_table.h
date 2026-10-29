@@ -682,3 +682,69 @@
 	"Note: the system's slow mode for memory cards is on, which deliberately slows every memory card transfer.",   /* engb */
 	"Not: sistemin hafıza kartı yavaş modu açık; her aktarımı bilerek yavaşlatır.",   /* tr */
 },
+[TS_I18N_ROW_SAFE] = {
+	"セーフモード",   /* ja */
+	"Safe mode",   /* en */
+	"Mode sans échec",   /* fr */
+	"Modo seguro",   /* es */
+	"Abgesicherter Modus",   /* de */
+	"Modalità provvisoria",   /* it */
+	"Veilige modus",   /* nl */
+	"Modo de segurança",   /* pt */
+	"Безопасный режим",   /* ru */
+	"안전 모드",   /* ko */
+	"安全模式",   /* zht */
+	"安全模式",   /* zhs */
+	"Vikasietotila",   /* fi */
+	"Felsäkert läge",   /* sv */
+	"Fejlsikret tilstand",   /* da */
+	"Sikker modus",   /* no */
+	"Tryb awaryjny",   /* pl */
+	"Modo de segurança",   /* ptbr */
+	"Safe mode",   /* engb */
+	"Güvenli mod",   /* tr */
+},
+[TS_I18N_HINT_SAFE] = {
+	"前回の起動が完了しなかったため（起動中の再起動やクラッシュ）、今回は何も有効になっていません。チェックを外してVitaを再起動すると、Turbo Storageが元に戻ります。",   /* ja */
+	"On because the last start didn't finish (the Vita restarted or crashed while Turbo Storage was starting), so nothing is active this boot. Untick, then restart the Vita to turn Turbo Storage back on.",   /* en */
+	"Activé car le dernier démarrage ne s'est pas terminé (la Vita a redémarré ou planté pendant le démarrage de Turbo Storage) : rien n'est actif cette fois. Décochez, puis redémarrez la Vita pour réactiver Turbo Storage.",   /* fr */
+	"Activado porque el último inicio no terminó (la Vita se reinició o falló mientras Turbo Storage arrancaba), así que nada está activo en este arranque. Desmárcalo y reinicia la Vita para volver a activar Turbo Storage.",   /* es */
+	"Aktiv, weil der letzte Start nicht abgeschlossen wurde (die Vita wurde während des Starts von Turbo Storage neu gestartet oder ist abgestürzt), daher ist diesmal nichts aktiv. Deaktivieren und die Vita neu starten, um Turbo Storage wieder einzuschalten.",   /* de */
+	"Attiva perché l'ultimo avvio non è stato completato (la Vita si è riavviata o bloccata mentre Turbo Storage si avviava), quindi in questo avvio non è attivo nulla. Deseleziona, poi riavvia la Vita per riattivare Turbo Storage.",   /* it */
+	"Aan omdat de laatste start niet is voltooid (de Vita herstartte of liep vast terwijl Turbo Storage startte), dus deze keer is niets actief. Vink uit en herstart de Vita om Turbo Storage weer in te schakelen.",   /* nl */
+	"Ativo porque o último arranque não terminou (a Vita reiniciou ou bloqueou enquanto o Turbo Storage arrancava), por isso nada está ativo agora. Desmarque e reinicie a Vita para voltar a ativar o Turbo Storage.",   /* pt */
+	"Включён, потому что прошлый запуск не завершился (Vita перезагрузилась или зависла во время запуска Turbo Storage), поэтому сейчас ничего не активно. Снимите флажок и перезагрузите Vita, чтобы снова включить Turbo Storage.",   /* ru */
+	"지난번 시작이 완료되지 않아(Turbo Storage 시작 중 재시작 또는 충돌) 이번 부팅에서는 아무것도 활성화되지 않았습니다. 체크를 해제한 후 Vita를 재시작하면 Turbo Storage가 다시 켜집니다.",   /* ko */
+	"因上次啟動未完成（Turbo Storage 啟動時 Vita 重新啟動或當機）而開啟，本次開機未啟用任何功能。取消勾選後重新啟動 Vita，即可重新啟用 Turbo Storage。",   /* zht */
+	"因上次启动未完成（Turbo Storage 启动时 Vita 重启或崩溃）而开启，本次开机未启用任何功能。取消勾选后重启 Vita，即可重新启用 Turbo Storage。",   /* zhs */
+	"Päällä, koska edellinen käynnistys ei valmistunut (Vita käynnistyi uudelleen tai kaatui Turbo Storagen käynnistyessä), joten mikään ei ole nyt käytössä. Poista valinta ja käynnistä Vita uudelleen ottaaksesi Turbo Storagen taas käyttöön.",   /* fi */
+	"På eftersom den senaste starten inte slutfördes (Vitan startades om eller kraschade medan Turbo Storage startade), så inget är aktivt nu. Avmarkera och starta om Vitan för att slå på Turbo Storage igen.",   /* sv */
+	"Slået til, fordi den sidste start ikke blev fuldført (Vitaen genstartede eller gik ned, mens Turbo Storage startede), så intet er aktivt nu. Fjern markeringen, og genstart Vitaen for at slå Turbo Storage til igen.",   /* da */
+	"På fordi forrige oppstart ikke ble fullført (Vitaen startet på nytt eller krasjet mens Turbo Storage startet), så ingenting er aktivt nå. Fjern merket og start Vitaen på nytt for å slå på Turbo Storage igjen.",   /* no */
+	"Włączony, bo ostatnie uruchomienie się nie zakończyło (Vita zrestartowała się lub zawiesiła podczas uruchamiania Turbo Storage), więc teraz nic nie jest aktywne. Odznacz i uruchom Vitę ponownie, aby znów włączyć Turbo Storage.",   /* pl */
+	"Ativo porque a última inicialização não terminou (o Vita reiniciou ou travou enquanto o Turbo Storage iniciava), então nada está ativo agora. Desmarque e reinicie o Vita para ativar o Turbo Storage de novo.",   /* ptbr */
+	"On because the last start didn't finish (the Vita restarted or crashed while Turbo Storage was starting), so nothing is active this boot. Untick, then restart the Vita to turn Turbo Storage back on.",   /* engb */
+	"Son başlatma tamamlanmadığı için açık (Turbo Storage başlarken Vita yeniden başladı veya çöktü), bu yüzden şu an hiçbir şey etkin değil. İşareti kaldırıp Vita'yı yeniden başlatarak Turbo Storage'ı tekrar açın.",   /* tr */
+},
+[TS_I18N_HINT_SAFE_LEFT] = {
+	"セーフモードを解除しました。Vitaを再起動すると、Turbo Storageが元に戻ります。",   /* ja */
+	"Safe mode left. Restart the Vita to turn Turbo Storage back on.",   /* en */
+	"Mode sans échec quitté. Redémarrez la Vita pour réactiver Turbo Storage.",   /* fr */
+	"Modo seguro desactivado. Reinicia la Vita para volver a activar Turbo Storage.",   /* es */
+	"Abgesicherter Modus verlassen. Starte die Vita neu, um Turbo Storage wieder einzuschalten.",   /* de */
+	"Modalità provvisoria disattivata. Riavvia la Vita per riattivare Turbo Storage.",   /* it */
+	"Veilige modus verlaten. Herstart de Vita om Turbo Storage weer in te schakelen.",   /* nl */
+	"Modo de segurança desativado. Reinicie a Vita para voltar a ativar o Turbo Storage.",   /* pt */
+	"Безопасный режим отключён. Перезагрузите Vita, чтобы снова включить Turbo Storage.",   /* ru */
+	"안전 모드를 해제했습니다. Vita를 재시작하면 Turbo Storage가 다시 켜집니다.",   /* ko */
+	"已離開安全模式。重新啟動 Vita 即可重新啟用 Turbo Storage。",   /* zht */
+	"已退出安全模式。重启 Vita 即可重新启用 Turbo Storage。",   /* zhs */
+	"Vikasietotilasta poistuttu. Käynnistä Vita uudelleen ottaaksesi Turbo Storagen taas käyttöön.",   /* fi */
+	"Felsäkert läge avslutat. Starta om Vitan för att slå på Turbo Storage igen.",   /* sv */
+	"Fejlsikret tilstand forladt. Genstart Vitaen for at slå Turbo Storage til igen.",   /* da */
+	"Sikker modus avsluttet. Start Vitaen på nytt for å slå på Turbo Storage igjen.",   /* no */
+	"Tryb awaryjny wyłączony. Uruchom Vitę ponownie, aby znów włączyć Turbo Storage.",   /* pl */
+	"Modo de segurança desativado. Reinicie o Vita para ativar o Turbo Storage de novo.",   /* ptbr */
+	"Safe mode left. Restart the Vita to turn Turbo Storage back on.",   /* engb */
+	"Güvenli moddan çıkıldı. Turbo Storage'ı tekrar açmak için Vita'yı yeniden başlatın.",   /* tr */
+},

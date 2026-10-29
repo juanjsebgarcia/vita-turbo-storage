@@ -62,6 +62,19 @@ int tsSelfTestPing(void);
  * Settings app. Returns TS_OK or TS_ERR_ARG. */
 int tsHudRegisterProc(int role);
 
+/* Safe mode (TsState.disabled == TS_DIS_SAFE: the last start didn't finish).
+ * TS_SAFE_QUERY returns 1 while in safe mode, 2 once left (restart pending),
+ * else 0. TS_SAFE_LEAVE re-arms the boot guard so the next start installs
+ * everything again; it takes effect after a restart. */
+#define TS_SAFE_QUERY  0
+#define TS_SAFE_LEAVE  1
+int tsSafeMode(int op);
+
+/* SceShell has started (the user module calls this from SceShell): the boot
+ * got as far as the Home screen, so a few seconds later the boot guard is
+ * cleared - a quick restart after that is not mistaken for a crash. */
+int tsShellUp(void);
+
 #ifdef __cplusplus
 }
 #endif
