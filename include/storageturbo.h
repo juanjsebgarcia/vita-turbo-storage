@@ -23,7 +23,7 @@
 
 /* Release version. The .yml module versions carry major.minor (0.1); bump all
  * three together. Logged in both modules' init banner so a log pins the build. */
-#define TS_VERSION_STR    "0.2.0-alpha"
+#define TS_VERSION_STR    "0.3.0-alpha"
 
 /* Everything the plugin writes lives here (created on first use). */
 #define TS_DATA_DIR       "ur0:data/turbostorage"
@@ -86,7 +86,7 @@ enum ts_key {
 #define TS_DEF_HUD_POS   TS_POS_TOP_RIGHT
 #define TS_DEF_DEVMODE   0
 #define TS_DEF_MEMCARD   0
-#define TS_DEF_HUD_GAME  0   /* HUD only on system screens unless turned on   */
+#define TS_DEF_HUD_GAME  1   /* on: the HUD is most useful while copying in an app */
 
 /* System processes the HUD draws over when the in-game HUD is off: each one
  * registers itself with tsHudRegisterProc() as it starts. Frames from any other

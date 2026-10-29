@@ -143,7 +143,8 @@ spent only about 4% of its time waiting for storage; the rest is the game itself
 - ⚠️ **Tells you when it isn't working.** If a storage is running at standard
   speed when you asked for faster (after an error, on unsupported firmware, in
   safe mode), its Settings help text says why, and the HUD flags an error.
-- 📊 **Live HUD.** Optional read/write speed over any app, in the corner you choose.
+- 📊 **Live HUD.** Optional read/write speed, in the corner you choose. It shows over apps and games by
+  default; turn off *In-game HUD* to keep it to the Home screen, Settings and the quick menu.
 - 🎛️ **Native Settings page.** Everything lives in *Settings → System → Turbo
   Storage*, in your system language.
 - 🛡️ **Safe by design.** The system's own driver does all the work, writes are
@@ -188,6 +189,7 @@ Vita games mostly don't wait on storage, so expect little change there.
 | Faster internal storage | The faster path for the console's internal storage. Turn it off before updating or downgrading the firmware. Recommended off for most users | Off |
 | Storage HUD | Off, Compact (one line per storage in use) or Extended (adds totals and errors) | Off |
 | HUD position | Top left, top right, bottom left or bottom right | Top right |
+| In-game HUD | Also show the HUD over games and apps. When off, it shows only on the Home screen, in Settings and in the quick menu (press the PS button) | On |
 | Developer mode | Opens the command port on TCP 1340 | Off |
 
 Every option takes effect **immediately, with no reboot**, and is saved. Switching a
@@ -209,7 +211,7 @@ network. One command per line:
 | Command | Does |
 |---|---|
 | `status` | Settings, per-storage status and counters |
-| `set <key> <value>` | `sd2vita`, `memcard`, `internal`, `verify`, `devmode` (0/1), `hud` (0–2), `hud_pos` (0–3) |
+| `set <key> <value>` | `sd2vita`, `memcard`, `internal`, `verify`, `devmode`, `hud_game` (0/1), `hud` (0–2), `hud_pos` (0–3) |
 | `ping` | Checks the kernel module answers |
 | `version`, `help` | |
 
