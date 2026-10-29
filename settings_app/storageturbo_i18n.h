@@ -18,6 +18,7 @@ enum ts_i18n_id {
 	TS_I18N_ROW_DEVMODE,
 	TS_I18N_ROW_MEMCARD,
 	TS_I18N_ROW_HUD_GAME,
+	TS_I18N_ROW_HUD_RECENT,
 	TS_I18N_HINT_SD2VITA,       /* help text, same order as the rows              */
 	TS_I18N_HINT_INTERNAL,
 	TS_I18N_HINT_HUD,
@@ -25,6 +26,7 @@ enum ts_i18n_id {
 	TS_I18N_HINT_DEVMODE,
 	TS_I18N_HINT_MEMCARD,
 	TS_I18N_HINT_HUD_GAME,
+	TS_I18N_HINT_HUD_RECENT,
 	TS_I18N_ITEM_HUD_OFF,       /* HUD list items, in TS_HUD_* order              */
 	TS_I18N_ITEM_HUD_COMPACT,
 	TS_I18N_ITEM_HUD_EXTENDED,

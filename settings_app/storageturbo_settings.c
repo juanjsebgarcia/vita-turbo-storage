@@ -44,7 +44,7 @@ static void s_cpy(char *d, const char *s, int n){ for(int i=0;i<n;i++) d[i]=s[i]
 
 /* Registry key names under /CONFIG/TURBOSTOR, in enum ts_key order. */
 static const char *const g_keys[TS_KEY_COUNT] = {
-	"sd2vita", "internal", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game",
+	"sd2vita", "internal", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game", "hud_recent",
 };
 
 #define ROW_LIST(k) \
@@ -68,6 +68,7 @@ static const char X_GROUP[] =
 		ITEM("ts_i_pos0", "0") ITEM("ts_i_pos1", "1") ITEM("ts_i_pos2", "2") ITEM("ts_i_pos3", "3")
 	"</list>"
 	ROW_TOGGLE("hud_game")
+	ROW_TOGGLE("hud_recent")
 	ROW_TOGGLE("devmode")
 	"</setting_list>";
 
@@ -149,12 +150,14 @@ static const signed char k_row[TS_KEY_COUNT] = {
 	[TS_KEY_VERIFY] = -1, [TS_KEY_HUD] = TS_I18N_ROW_HUD,
 	[TS_KEY_HUD_POS] = TS_I18N_ROW_HUD_POS, [TS_KEY_DEVMODE] = TS_I18N_ROW_DEVMODE,
 	[TS_KEY_MEMCARD] = TS_I18N_ROW_MEMCARD, [TS_KEY_HUD_GAME] = TS_I18N_ROW_HUD_GAME,
+	[TS_KEY_HUD_RECENT] = TS_I18N_ROW_HUD_RECENT,
 };
 static const signed char k_hint[TS_KEY_COUNT] = {
 	[TS_KEY_SD2VITA] = TS_I18N_HINT_SD2VITA, [TS_KEY_INTERNAL] = TS_I18N_HINT_INTERNAL,
 	[TS_KEY_VERIFY] = -1, [TS_KEY_HUD] = TS_I18N_HINT_HUD,
 	[TS_KEY_HUD_POS] = TS_I18N_HINT_HUD_POS, [TS_KEY_DEVMODE] = TS_I18N_HINT_DEVMODE,
 	[TS_KEY_MEMCARD] = TS_I18N_HINT_MEMCARD, [TS_KEY_HUD_GAME] = TS_I18N_HINT_HUD_GAME,
+	[TS_KEY_HUD_RECENT] = TS_I18N_HINT_HUD_RECENT,
 };
 
 static int key_index(const char *name)

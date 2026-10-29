@@ -190,6 +190,7 @@ Vita games mostly don't wait on storage, so expect little change there.
 | Storage HUD | Off, Compact (one line per storage in use) or Extended (adds totals and errors) | Off |
 | HUD position | Top left, top right, bottom left or bottom right | Top right |
 | In-game HUD | Also show the HUD over games and apps. When off, it shows only on the Home screen, in Settings and in the quick menu (press the PS button) | On |
+| Recent activity only | Only show a storage while it's in use: it appears when it's read or written and drops off after 60 seconds without activity. With nothing in use, the HUD hides | On |
 | Developer mode | Opens the command port on TCP 1340 | Off |
 
 Every option takes effect **immediately, with no reboot**, and is saved. Switching a
@@ -211,7 +212,7 @@ network. One command per line:
 | Command | Does |
 |---|---|
 | `status` | Settings, per-storage status and counters |
-| `set <key> <value>` | `sd2vita`, `memcard`, `internal`, `verify`, `devmode`, `hud_game` (0/1), `hud` (0–2), `hud_pos` (0–3) |
+| `set <key> <value>` | `sd2vita`, `memcard`, `internal`, `verify`, `devmode`, `hud_game`, `hud_recent` (0/1), `hud` (0–2), `hud_pos` (0–3) |
 | `ping` | Checks the kernel module answers |
 | `version`, `help` | |
 

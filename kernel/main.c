@@ -163,11 +163,15 @@ static void hud_feed(const TsDevState *now)
 		s.hud = TS_HUD_OFF;
 	/* One line per storage that has seen any I/O since boot (an SD2Vita line
 	 * only appears with one fitted): live speed of all its transfers, whether
-	 * or not they took the faster path. Extended adds totals and state. */
+	 * or not they took the faster path. Extended adds totals and state. With
+	 * "recent activity only", a storage idle for TS_HUD_RECENT_SECS drops off
+	 * (one in error stays), and with nothing in use the HUD hides. Called once
+	 * a second, so idle[] counts seconds. */
 	int slow = ts_stage_memcard_slow() == 1;
 
 	for (int o = 0; o < TS_DEV_COUNT; o++) {
 		static uint64_t seen[TS_DEV_COUNT];
+		static uint32_t idle[TS_DEV_COUNT];   /* seconds since the last read/write */
 		int i = k_hud_order[o];
 		uint64_t rd, wr;
 		char r[12], w[12];
@@ -175,10 +179,16 @@ static void hud_feed(const TsDevState *now)
 		ts_stage_bytes(i, &rd, &wr);
 		mbps(r, sizeof(r), rd - last_rd[i]);
 		mbps(w, sizeof(w), wr - last_wr[i]);
+		if (rd != last_rd[i] || wr != last_wr[i])
+			idle[i] = 0;
+		else if (idle[i] < TS_HUD_RECENT_SECS)
+			idle[i]++;
 		last_rd[i] = rd;
 		last_wr[i] = wr;
 		seen[i] |= rd | wr;
 		if (s.hud == TS_HUD_OFF || !seen[i])
+			continue;
+		if (s.hud_recent && idle[i] >= TS_HUD_RECENT_SECS && now[i].status != TS_ST_FALLBACK)
 			continue;
 		const char *name = s.hud == TS_HUD_COMPACT ? k_dev_short[i]
 		                 : i == TS_DEV_INTERNAL ? hud_tr(g_lang, HTR_INTERNAL)

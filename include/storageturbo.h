@@ -63,6 +63,7 @@ enum ts_key {
 	TS_KEY_DEVMODE,        /* 0/1: developer command server on TCP :1340     */
 	TS_KEY_MEMCARD,        /* 0/1: faster memory card (added after 0.1.0)    */
 	TS_KEY_HUD_GAME,       /* 0/1: HUD also over games and apps (after 0.2.0) */
+	TS_KEY_HUD_RECENT,     /* 0/1: only storages used in the last 60 s       */
 	TS_KEY_COUNT
 };
 
@@ -87,6 +88,8 @@ enum ts_key {
 #define TS_DEF_DEVMODE   0
 #define TS_DEF_MEMCARD   0
 #define TS_DEF_HUD_GAME  1   /* on: the HUD is most useful while copying in an app */
+#define TS_DEF_HUD_RECENT 1  /* on: idle storages drop off, an idle HUD hides  */
+#define TS_HUD_RECENT_SECS 60
 
 /* System processes the HUD draws over when the in-game HUD is off: each one
  * registers itself with tsHudRegisterProc() as it starts. Frames from any other
@@ -105,6 +108,7 @@ typedef struct TsSettings {
 	int32_t devmode;
 	int32_t memcard;
 	int32_t hud_game;
+	int32_t hud_recent;
 } TsSettings;
 
 /* 1 if `v` is a legal value for `key`, else 0. Shared so the kernel's
@@ -118,6 +122,7 @@ static inline int ts_setting_valid(int key, int v)
 	case TS_KEY_DEVMODE:
 	case TS_KEY_MEMCARD:
 	case TS_KEY_HUD_GAME:
+	case TS_KEY_HUD_RECENT:
 		return v == 0 || v == 1;
 	case TS_KEY_HUD:
 		return v >= TS_HUD_OFF && v <= TS_HUD_EXTENDED;
