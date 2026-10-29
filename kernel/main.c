@@ -329,10 +329,15 @@ int tsSelfTestPing(void)
 }
 
 /* Safe mode has no worker thread, and a syscall does no file I/O (see
- * settings.c), so leaving it writes the guard from a one-shot kernel thread. */
+ * settings.c) - nor can it create a kernel thread. So module_start leaves this
+ * thread waiting in safe mode, and leaving it from Settings only signals it. */
+static SceUID g_safe_sema = -1;
+
 static int safe_leave_thread(SceSize args, void *argp)
 {
 	(void)args; (void)argp;
+	if (ksceKernelWaitSema(g_safe_sema, 1, NULL) < 0)
+		return ksceKernelExitDeleteThread(0);
 	guard_write('0', "settings");
 	TS_KLOGI("safe mode left from Settings - everything installs at the next start");
 	return ksceKernelExitDeleteThread(0);
@@ -343,9 +348,7 @@ int tsSafeMode(int op)
 	if (g_disabled != TS_DIS_SAFE)
 		return op == TS_SAFE_QUERY ? 0 : TS_ERR_ARG;
 	if (op == TS_SAFE_LEAVE && !g_safe_left) {
-		SceUID t = ksceKernelCreateThread("SceStorageTurboSafe", safe_leave_thread,
-		                                  0x80, 0x2000, 0, 0, NULL);
-		if (t < 0 || ksceKernelStartThread(t, 0, NULL) < 0)
+		if (g_safe_sema < 0 || ksceKernelSignalSema(g_safe_sema, 1) < 0)
 			return TS_ERR_NOT_READY;
 		g_safe_left = 1;
 	}
@@ -393,10 +396,15 @@ int module_start(SceSize argc, const void *args)
 	 * before the storage flushes). */
 	if (guard_read() == '1') {
 		g_disabled = TS_DIS_SAFE;
-		TS_KLOGW("safe mode: the last start didn't finish (boot_guard [%s]), so "
-		         "nothing is installed this boot. To leave it, untick Safe mode in "
-		         "Settings > System > Turbo Storage and restart (or write 0 to "
-		         TS_GUARD_PATH ")", g_guard_txt);
+		TS_KLOGW("SAFE MODE: last start didn't finish [%s], nothing installed", g_guard_txt);
+		TS_KLOGW("to leave: Settings > System > Turbo Storage, untick Safe mode, restart");
+		g_safe_sema = ksceKernelCreateSema("SceStorageTurboSafe", 0, 0, 1, NULL);
+		SceUID t = g_safe_sema < 0 ? -1 :
+		           ksceKernelCreateThread("SceStorageTurboSafe", safe_leave_thread,
+		                                  0x80, 0x2000, 0, 0, NULL);
+		if (t < 0 || ksceKernelStartThread(t, 0, NULL) < 0)
+			TS_KLOGW("safe mode helper not started (0x%08x): Settings can't leave it",
+			         (unsigned)t);
 		return SCE_KERNEL_START_SUCCESS;
 	}
 	TS_KLOGI("boot_guard was [%s], setting 1", g_guard_txt);
