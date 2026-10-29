@@ -353,26 +353,26 @@
 	"HUD'yi bir oyun veya uygulama çalışırken de gösterir. Kapalıyken yalnızca ana ekranda, Ayarlar'da ve hızlı menüde (PS düğmesi) görünür.",   /* tr */
 },
 [TS_I18N_HINT_HUD_RECENT] = {
-	"読み書きしたストレージだけを表示し、30秒間使われないと消えます。何も使っていないときはHUDも消えます。",   /* ja */
-	"Only shows a storage while it's in use: it appears when it's read or written and drops off after 30 seconds without activity. With nothing in use, the HUD hides.",   /* en */
-	"N'affiche un stockage que pendant son utilisation : il apparaît lors d'une lecture ou d'une écriture et disparaît après 30 secondes sans activité. Si rien n'est utilisé, le HUD se masque.",   /* fr */
-	"Solo muestra un almacenamiento mientras se usa: aparece al leer o escribir y desaparece tras 30 segundos sin actividad. Si no se usa ninguno, el HUD se oculta.",   /* es */
-	"Zeigt einen Speicher nur während der Nutzung: Er erscheint beim Lesen oder Schreiben und verschwindet nach 30 Sekunden ohne Aktivität. Wird keiner genutzt, wird das HUD ausgeblendet.",   /* de */
-	"Mostra una memoria solo mentre è in uso: appare durante una lettura o una scrittura e scompare dopo 30 secondi di inattività. Se nessuna è in uso, l'HUD si nasconde.",   /* it */
-	"Toont een opslag alleen terwijl die in gebruik is: hij verschijnt bij lezen of schrijven en verdwijnt na 30 seconden zonder activiteit. Als er niets in gebruik is, verdwijnt de HUD.",   /* nl */
-	"Só mostra um armazenamento enquanto está em uso: aparece ao ler ou escrever e desaparece após 30 segundos sem atividade. Se nada estiver em uso, o HUD esconde-se.",   /* pt */
-	"Показывает память, только пока она используется: строка появляется при чтении или записи и исчезает через 30 секунд без активности. Если ничего не используется, HUD скрывается.",   /* ru */
-	"사용 중인 저장소만 표시합니다. 읽거나 쓸 때 나타나고 30초 동안 사용하지 않으면 사라집니다. 아무것도 사용하지 않으면 HUD가 숨겨집니다.",   /* ko */
-	"僅在儲存空間使用中時顯示：讀取或寫入時出現，30 秒無活動後消失。皆未使用時，HUD 會隱藏。",   /* zht */
-	"仅在存储使用中时显示：读取或写入时出现，30 秒无活动后消失。均未使用时，HUD 会隐藏。",   /* zhs */
-	"Näyttää tallennustilan vain käytön aikana: se tulee näkyviin lukiessa tai kirjoittaessa ja katoaa 30 sekunnin käyttämättömyyden jälkeen. Kun mitään ei käytetä, HUD piiloutuu.",   /* fi */
-	"Visar bara en lagring medan den används: den visas vid läsning eller skrivning och försvinner efter 30 sekunder utan aktivitet. När inget används döljs HUD:en.",   /* sv */
-	"Viser kun et lager, mens det er i brug: det vises ved læsning eller skrivning og forsvinder efter 30 sekunder uden aktivitet. Når intet er i brug, skjules HUD'en.",   /* da */
-	"Viser bare en lagring mens den er i bruk: den vises ved lesing eller skriving og forsvinner etter 30 sekunder uten aktivitet. Når ingenting er i bruk, skjules HUD-en.",   /* no */
-	"Pokazuje pamięć tylko podczas używania: pojawia się przy odczycie lub zapisie i znika po 30 sekundach bez aktywności. Gdy nic nie jest używane, HUD się ukrywa.",   /* pl */
-	"Só mostra um armazenamento enquanto está em uso: aparece ao ler ou gravar e some após 30 segundos sem atividade. Se nada estiver em uso, o HUD se esconde.",   /* ptbr */
-	"Only shows a storage while it's in use: it appears when it's read or written and drops off after 30 seconds without activity. With nothing in use, the HUD hides.",   /* engb */
-	"Bir depolamayı yalnızca kullanılırken gösterir: okunduğunda veya yazıldığında görünür, 30 saniye işlem olmazsa kaybolur. Hiçbiri kullanılmıyorsa HUD gizlenir.",   /* tr */
+	"読み書きしたストレージだけを表示し、30秒間使われないと消えます。そのため、ストレージが使われるまでHUDは空に見えたり、まったく表示されなかったりします。",   /* ja */
+	"Only shows a storage while it's in use: it appears when it's read or written and drops off after 30 seconds without activity. So the HUD may look empty, or not appear at all, until there's some storage activity.",   /* en */
+	"N'affiche un stockage que pendant son utilisation : il apparaît lors d'une lecture ou d'une écriture et disparaît après 30 secondes sans activité. Le HUD peut donc sembler vide, ou ne pas apparaître du tout, tant qu'aucun stockage n'est utilisé.",   /* fr */
+	"Solo muestra un almacenamiento mientras se usa: aparece al leer o escribir y desaparece tras 30 segundos sin actividad. Por eso el HUD puede parecer vacío, o no aparecer en absoluto, hasta que haya actividad de almacenamiento.",   /* es */
+	"Zeigt einen Speicher nur während der Nutzung: Er erscheint beim Lesen oder Schreiben und verschwindet nach 30 Sekunden ohne Aktivität. Das HUD kann daher leer wirken oder gar nicht erscheinen, bis auf einen Speicher zugegriffen wird.",   /* de */
+	"Mostra una memoria solo mentre è in uso: appare durante una lettura o una scrittura e scompare dopo 30 secondi di inattività. Per questo l'HUD può sembrare vuoto, o non comparire affatto, finché non c'è attività sulla memoria.",   /* it */
+	"Toont een opslag alleen terwijl die in gebruik is: hij verschijnt bij lezen of schrijven en verdwijnt na 30 seconden zonder activiteit. De HUD kan dus leeg lijken, of helemaal niet verschijnen, tot er opslagactiviteit is.",   /* nl */
+	"Só mostra um armazenamento enquanto está em uso: aparece ao ler ou escrever e desaparece após 30 segundos sem atividade. Por isso o HUD pode parecer vazio, ou nem aparecer, até haver atividade de armazenamento.",   /* pt */
+	"Показывает память, только пока она используется: строка появляется при чтении или записи и исчезает через 30 секунд без активности. Поэтому HUD может выглядеть пустым или вовсе не появляться, пока нет обращений к памяти.",   /* ru */
+	"사용 중인 저장소만 표시합니다. 읽거나 쓸 때 나타나고 30초 동안 사용하지 않으면 사라집니다. 따라서 저장소 사용이 있을 때까지 HUD가 비어 보이거나 아예 나타나지 않을 수 있습니다.",   /* ko */
+	"僅在儲存空間使用中時顯示：讀取或寫入時出現，30 秒無活動後消失。因此在有儲存活動之前，HUD 可能看起來是空的，或完全不出現。",   /* zht */
+	"仅在存储使用中时显示：读取或写入时出现，30 秒无活动后消失。因此在有存储活动之前，HUD 可能看起来是空的，或完全不出现。",   /* zhs */
+	"Näyttää tallennustilan vain käytön aikana: se tulee näkyviin lukiessa tai kirjoittaessa ja katoaa 30 sekunnin käyttämättömyyden jälkeen. HUD voi siksi näyttää tyhjältä tai olla näkymättä, kunnes tallennustilaa käytetään.",   /* fi */
+	"Visar bara en lagring medan den används: den visas vid läsning eller skrivning och försvinner efter 30 sekunder utan aktivitet. HUD:en kan därför se tom ut, eller inte visas alls, tills det finns lagringsaktivitet.",   /* sv */
+	"Viser kun et lager, mens det er i brug: det vises ved læsning eller skrivning og forsvinder efter 30 sekunder uden aktivitet. HUD'en kan derfor se tom ud, eller slet ikke blive vist, indtil der er lageraktivitet.",   /* da */
+	"Viser bare en lagring mens den er i bruk: den vises ved lesing eller skriving og forsvinner etter 30 sekunder uten aktivitet. HUD-en kan derfor se tom ut, eller ikke vises i det hele tatt, til det er lagringsaktivitet.",   /* no */
+	"Pokazuje pamięć tylko podczas używania: pojawia się przy odczycie lub zapisie i znika po 30 sekundach bez aktywności. Dlatego HUD może wyglądać na pusty lub w ogóle się nie pojawiać, dopóki pamięć nie będzie używana.",   /* pl */
+	"Só mostra um armazenamento enquanto está em uso: aparece ao ler ou gravar e some após 30 segundos sem atividade. Por isso o HUD pode parecer vazio, ou nem aparecer, até haver atividade de armazenamento.",   /* ptbr */
+	"Only shows a storage while it's in use: it appears when it's read or written and drops off after 30 seconds without activity. So the HUD may look empty, or not appear at all, until there's some storage activity.",   /* engb */
+	"Bir depolamayı yalnızca kullanılırken gösterir: okunduğunda veya yazıldığında görünür, 30 saniye işlem olmazsa kaybolur. Bu yüzden depolama etkinliği olana kadar HUD boş görünebilir veya hiç görünmeyebilir.",   /* tr */
 },
 [TS_I18N_ITEM_HUD_OFF] = {
 	"オフ",   /* ja */
