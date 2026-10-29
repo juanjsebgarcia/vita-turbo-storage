@@ -19,11 +19,13 @@
  */
 #include <psp2kern/kernel/sysclib.h>   /* memcpy/memset                        */
 #include <psp2kern/display.h>
+#include <psp2kern/kernel/threadmgr.h>   /* ksceKernelGetProcessId              */
 #include <taihen.h>
 
 #include "hud.h"
 #include "font8x8.h"
 #include "klog.h"
+#include "settings.h"                   /* g_ts_settings.hud_game             */
 #include "../include/storageturbo.h"
 
 #define HUD_FG         0xFFFFFFFFu /* opaque white (ABGR8888)                 */
@@ -45,7 +47,11 @@ static volatile int g_front = 0;
 
 /* Diagnostics, written by the frame hook and logged by the worker
  * (ts_hud_diag_poll): the last frame seen and why it was or wasn't drawn. */
-enum { HD_DRAWN = 0, HD_NO_TEXT, HD_BAD_SIZE, HD_BAD_FORMAT, HD_COUNT };
+enum { HD_DRAWN = 0, HD_NO_TEXT, HD_BAD_SIZE, HD_BAD_FORMAT, HD_IN_GAME, HD_COUNT };
+
+/* Each pid is one aligned word, written once by its process, so the hook
+ * reads it unlocked. */
+static volatile SceUID g_sys_pid[TS_HUD_PROC_COUNT] = { -1, -1 };
 static volatile uint32_t g_d_fmt, g_d_w, g_d_h, g_d_why;
 static volatile uint32_t g_d_n[HD_COUNT];
 
@@ -161,6 +167,15 @@ static int hook_set_framebuf(int head, int index,
 		g_d_why = HD_BAD_FORMAT; g_d_n[HD_BAD_FORMAT]++;
 		return ret;
 	}
+	/* In-game HUD off: only frames set by a registered system process (this
+	 * runs in the context of the process setting the frame). */
+	if (!g_ts_settings.hud_game) {
+		SceUID pid = ksceKernelGetProcessId();
+		if (pid != g_sys_pid[TS_HUD_PROC_SHELL] && pid != g_sys_pid[TS_HUD_PROC_SETTINGS]) {
+			g_d_why = HD_IN_GAME; g_d_n[HD_IN_GAME]++;
+			return ret;
+		}
+	}
 	g_d_why = HD_DRAWN; g_d_n[HD_DRAWN]++;
 
 	uint32_t prev_dacr = hud_dacr_open();
@@ -190,6 +205,16 @@ int ts_hud_init(void)
 	return TS_OK;
 }
 
+int ts_hud_register_proc(int role)
+{
+	if (role < 0 || role >= TS_HUD_PROC_COUNT)
+		return TS_ERR_ARG;
+	SceUID pid = ksceKernelGetProcessId();
+	g_sys_pid[role] = pid;
+	TS_KLOGI("hud: system process %d = pid 0x%08x", role, (unsigned)pid);
+	return TS_OK;
+}
+
 void ts_hud_fini(void)
 {
 	g_text[0].n = g_text[1].n = 0;
@@ -206,15 +231,17 @@ void ts_hud_diag_poll(unsigned secs)
 	static uint32_t last_fmt = 0xFFFFFFFFu, last_w, last_h, last_why = 0xFFFFFFFFu;
 	if (g_d_fmt != last_fmt || g_d_w != last_w || g_d_h != last_h || g_d_why != last_why) {
 		static const char *const why[HD_COUNT] = { "drawn", "no text (off)",
-		                                           "odd size", "pixel format" };
+		                                           "odd size", "pixel format",
+		                                           "in-game (In-game HUD off)" };
 		TS_KLOGI("hud: frame %ux%u fmt 0x%08x -> %s", (unsigned)g_d_w, (unsigned)g_d_h,
 		         (unsigned)g_d_fmt, g_d_why < HD_COUNT ? why[g_d_why] : "?");
 		last_fmt = g_d_fmt; last_w = g_d_w; last_h = g_d_h; last_why = g_d_why;
 	}
 	if (secs % 30 == 0)
-		TS_KLOGI("hud: frames drawn=%u off=%u size=%u format=%u",
+		TS_KLOGI("hud: frames drawn=%u off=%u size=%u format=%u in-game=%u",
 		         (unsigned)g_d_n[HD_DRAWN], (unsigned)g_d_n[HD_NO_TEXT],
-		         (unsigned)g_d_n[HD_BAD_SIZE], (unsigned)g_d_n[HD_BAD_FORMAT]);
+		         (unsigned)g_d_n[HD_BAD_SIZE], (unsigned)g_d_n[HD_BAD_FORMAT],
+		         (unsigned)g_d_n[HD_IN_GAME]);
 }
 
 int ts_hud_installed(void)

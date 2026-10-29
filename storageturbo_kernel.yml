@@ -13,3 +13,4 @@ storageturbo_kernel:
         - tsGetState
         - tsSetSetting
         - tsSelfTestPing
+        - tsHudRegisterProc

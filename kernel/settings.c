@@ -37,7 +37,7 @@ static int          g_save_fails = 0;   /* retry a failed save a few times */
 
 static const int32_t g_defaults[TS_KEY_COUNT] = {
 	TS_DEF_SD2VITA, TS_DEF_INTERNAL, TS_DEF_VERIFY, TS_DEF_HUD, TS_DEF_HUD_POS,
-	TS_DEF_DEVMODE, TS_DEF_MEMCARD,
+	TS_DEF_DEVMODE, TS_DEF_MEMCARD, TS_DEF_HUD_GAME,
 };
 
 static uint32_t file_check(const TsSettingsFile *f)

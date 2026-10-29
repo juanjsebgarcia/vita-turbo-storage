@@ -57,6 +57,11 @@ int tsSetSetting(int key, int value);
 #define TS_SELFTEST_MAGIC  0x54535431u
 int tsSelfTestPing(void);
 
+/* Register the calling process as one of the system screens the HUD draws over
+ * (TS_HUD_PROC_*): the user module calls it at start in SceShell and in the
+ * Settings app. Returns TS_OK or TS_ERR_ARG. */
+int tsHudRegisterProc(int role);
+
 #ifdef __cplusplus
 }
 #endif

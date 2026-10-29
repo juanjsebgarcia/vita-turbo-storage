@@ -306,6 +306,12 @@ int tsSelfTestPing(void)
 	return (int)TS_SELFTEST_MAGIC;
 }
 
+/* Works before the HUD is installed too: only records the pid. */
+int tsHudRegisterProc(int role)
+{
+	return ts_hud_register_proc(role);
+}
+
 /* ---- module lifecycle ------------------------------------------------------- */
 
 int module_start(SceSize argc, const void *args);

@@ -20,4 +20,8 @@ void ts_hud_diag_poll(unsigned secs);   /* worker: log why frames are (not) draw
  * (TS_POS_*). Worker thread only. */
 void ts_hud_set_text(const char lines[][TS_HUD_LINE_MAX], int n, int pos);
 
+/* Record the calling process (syscall context) as a system screen
+ * (TS_HUD_PROC_*); with the in-game HUD off, only those get the overlay. */
+int  ts_hud_register_proc(int role);
+
 #endif /* STORAGETURBO_HUD_H */

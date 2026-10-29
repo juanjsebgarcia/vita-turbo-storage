@@ -154,6 +154,28 @@
 	"Faster Vita memory card",   /* engb */
 	"Daha hızlı Vita hafıza kartı",   /* tr */
 },
+[TS_I18N_ROW_HUD_GAME] = {
+	"ゲーム中のHUD",   /* ja */
+	"In-game HUD",   /* en */
+	"HUD en jeu",   /* fr */
+	"HUD durante el juego",   /* es */
+	"HUD im Spiel",   /* de */
+	"HUD in gioco",   /* it */
+	"HUD tijdens spelen",   /* nl */
+	"HUD durante o jogo",   /* pt */
+	"HUD в играх",   /* ru */
+	"게임 중 HUD",   /* ko */
+	"遊戲中顯示 HUD",   /* zht */
+	"游戏中显示 HUD",   /* zhs */
+	"HUD pelin aikana",   /* fi */
+	"HUD i spel",   /* sv */
+	"HUD i spil",   /* da */
+	"HUD i spill",   /* no */
+	"HUD w grach",   /* pl */
+	"HUD durante o jogo",   /* ptbr */
+	"In-game HUD",   /* engb */
+	"Oyun içi HUD",   /* tr */
+},
 [TS_I18N_HINT_SD2VITA] = {
 	"SD2Vitaアダプターに入れたmicroSDカードの読み書きを高速化します。ファイルや保存方法は変わりません。問題が疑われる場合はオフにしてください。すぐに反映され、再起動は不要です。",   /* ja */
 	"Speeds up reading and writing a microSD card in an SD2Vita adapter. Your files and how they are stored do not change. Turn off if you suspect a problem. Takes effect immediately; no reboot needed.",   /* en */
@@ -285,6 +307,28 @@
 	"Acelera a leitura e a gravação do cartão de memória oficial do PS Vita. Seus arquivos e a forma como são salvos não mudam. Desligue se suspeitar de um problema. Tem efeito imediato; não precisa reiniciar.",   /* ptbr */
 	"Speeds up reading and writing the official PS Vita memory card. Your files and how they are stored do not change. Turn off if you suspect a problem. Takes effect immediately; no reboot needed.",   /* engb */
 	"Resmi PS Vita hafıza kartının okuma ve yazma hızını artırır. Dosyalarınız ve saklanma biçimleri değişmez. Bir sorundan şüphelenirseniz kapatın. Hemen etkili olur; yeniden başlatma gerekmez.",   /* tr */
+},
+[TS_I18N_HINT_HUD_GAME] = {
+	"ゲームやアプリの実行中もHUDを表示します。オフにすると、ホーム画面、設定、クイックメニュー（PSボタン）でのみ表示されます。",   /* ja */
+	"Also show the HUD while a game or app is running. When off, it only shows on the Home screen, in Settings and in the quick menu (press the PS button).",   /* en */
+	"Affiche aussi le HUD pendant un jeu ou une application. Désactivé, il n'apparaît que sur l'écran d'accueil, dans les Paramètres et dans le menu rapide (touche PS).",   /* fr */
+	"Muestra también el HUD mientras se ejecuta un juego o una aplicación. Si está desactivado, solo aparece en la pantalla de inicio, en Ajustes y en el menú rápido (botón PS).",   /* es */
+	"Zeigt das HUD auch während eines Spiels oder einer App. Wenn aus, erscheint es nur auf dem Startbildschirm, in den Einstellungen und im Schnellmenü (PS-Taste).",   /* de */
+	"Mostra l'HUD anche durante un gioco o un'applicazione. Se disattivato, appare solo nella schermata Home, nelle Impostazioni e nel menu rapido (tasto PS).",   /* it */
+	"Toont de HUD ook tijdens een game of app. Als dit uit staat, verschijnt de HUD alleen op het startscherm, in Instellingen en in het snelmenu (PS-toets).",   /* nl */
+	"Mostra também o HUD durante um jogo ou aplicação. Desativado, só aparece no ecrã inicial, nas Definições e no menu rápido (botão PS).",   /* pt */
+	"Показывать HUD и во время игры или приложения. Если выключено, HUD виден только на главном экране, в настройках и в быстром меню (кнопка PS).",   /* ru */
+	"게임이나 앱 실행 중에도 HUD를 표시합니다. 끄면 홈 화면, 설정, 퀵 메뉴(PS 버튼)에서만 표시됩니다.",   /* ko */
+	"執行遊戲或應用程式時也顯示 HUD。關閉時，只在主畫面、設定及快速選單（PS 按鈕）中顯示。",   /* zht */
+	"运行游戏或应用程序时也显示 HUD。关闭时，仅在主屏幕、设置和快捷菜单（PS 按钮）中显示。",   /* zhs */
+	"Näyttää HUD:n myös pelin tai sovelluksen aikana. Pois päältä se näkyy vain aloitusnäytössä, asetuksissa ja pikavalikossa (PS-näppäin).",   /* fi */
+	"Visar HUD:en även när ett spel eller en app körs. Av: den visas bara på hemskärmen, i Inställningar och i snabbmenyn (PS-knappen).",   /* sv */
+	"Viser også HUD'en, mens et spil eller en app kører. Fra: den vises kun på startskærmen, i Indstillinger og i hurtigmenuen (PS-knappen).",   /* da */
+	"Viser også HUD-en mens et spill eller en app kjører. Av: den vises bare på startskjermen, i Innstillinger og i hurtigmenyen (PS-knappen).",   /* no */
+	"Pokazuje HUD także podczas gry lub aplikacji. Gdy wyłączone, HUD jest widoczny tylko na ekranie głównym, w Ustawieniach i w szybkim menu (przycisk PS).",   /* pl */
+	"Mostra o HUD também durante um jogo ou aplicativo. Desligado, ele só aparece na tela inicial, em Configurações e no menu rápido (botão PS).",   /* ptbr */
+	"Also show the HUD while a game or app is running. When off, it only shows on the Home screen, in Settings and in the quick menu (press the PS button).",   /* engb */
+	"HUD'yi bir oyun veya uygulama çalışırken de gösterir. Kapalıyken yalnızca ana ekranda, Ayarlar'da ve hızlı menüde (PS düğmesi) görünür.",   /* tr */
 },
 [TS_I18N_ITEM_HUD_OFF] = {
 	"オフ",   /* ja */

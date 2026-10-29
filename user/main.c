@@ -46,6 +46,9 @@ int module_start(SceSize argc, const void *args)
 	        TS_VERSION_STR, in_shell() ? "shell" : "settings", (unsigned)ping, r,
 	        r == TS_OK ? (int)st.disabled : -1);
 
+	/* The HUD draws over these system screens even with In-game HUD off. */
+	tsHudRegisterProc(in_shell() ? TS_HUD_PROC_SHELL : TS_HUD_PROC_SETTINGS);
+
 	if (in_shell())
 		ts_dispatch_start();          /* deferred; returns immediately */
 	else
