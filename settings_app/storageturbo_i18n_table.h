@@ -177,26 +177,26 @@
 	"Oyun içi HUD",   /* tr */
 },
 [TS_I18N_ROW_HUD_RECENT] = {
-	"使用中のみ表示",   /* ja */
-	"Recent activity only",   /* en */
-	"Activité récente uniquement",   /* fr */
-	"Solo actividad reciente",   /* es */
-	"Nur aktive Speicher",   /* de */
-	"Solo attività recente",   /* it */
-	"Alleen recente activiteit",   /* nl */
-	"Apenas atividade recente",   /* pt */
-	"Только активные",   /* ru */
-	"최근 사용만 표시",   /* ko */
-	"僅顯示最近使用",   /* zht */
-	"仅显示最近使用",   /* zhs */
-	"Vain viimeaikainen käyttö",   /* fi */
-	"Endast senaste aktivitet",   /* sv */
-	"Kun seneste aktivitet",   /* da */
-	"Bare nylig aktivitet",   /* no */
-	"Tylko ostatnia aktywność",   /* pl */
-	"Somente atividade recente",   /* ptbr */
-	"Recent activity only",   /* engb */
-	"Yalnızca son etkinlik",   /* tr */
+	"HUD：使用中のみ表示",   /* ja */
+	"HUD recent activity only",   /* en */
+	"HUD : activité récente uniquement",   /* fr */
+	"HUD: solo actividad reciente",   /* es */
+	"HUD: nur aktive Speicher",   /* de */
+	"HUD: solo attività recente",   /* it */
+	"HUD: alleen recente activiteit",   /* nl */
+	"HUD: apenas atividade recente",   /* pt */
+	"HUD: только активные",   /* ru */
+	"HUD 최근 사용만 표시",   /* ko */
+	"HUD 僅顯示最近使用",   /* zht */
+	"HUD 仅显示最近使用",   /* zhs */
+	"HUD: vain viimeaikainen käyttö",   /* fi */
+	"HUD: endast senaste aktivitet",   /* sv */
+	"HUD: kun seneste aktivitet",   /* da */
+	"HUD: bare nylig aktivitet",   /* no */
+	"HUD: tylko ostatnia aktywność",   /* pl */
+	"HUD: somente atividade recente",   /* ptbr */
+	"HUD recent activity only",   /* engb */
+	"HUD: yalnızca son etkinlik",   /* tr */
 },
 [TS_I18N_HINT_SD2VITA] = {
 	"SD2Vitaアダプターに入れたmicroSDカードの読み書きを高速化します。ファイルや保存方法は変わりません。問題が疑われる場合はオフにしてください。すぐに反映され、再起動は不要です。",   /* ja */
