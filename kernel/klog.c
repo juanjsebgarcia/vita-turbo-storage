@@ -6,6 +6,11 @@
  * best-effort and disabled silently on any failure. One rotation step
  * (kernel.log -> kernel.old.log) keeps the previous chunk.
  *
+ * Until the boot is known good (ts_klog_sync(0)), and for every warning or
+ * error, the file is closed after each line: a line written to an open file
+ * can still be in the file-system cache when the console goes down, and the
+ * boot that crashes is the one whose log matters.
+ *
  * A single mutex guards the fd. The formatter is a self-contained printf subset
  * (no libc in kernel), the same one the Settings-page logger uses.
  */
@@ -23,6 +28,8 @@ static int      g_level  = TS_KLOG_DEFAULT_LEVEL;
 static SceUID   g_fd = -1;
 static int      g_file_disabled = 0;
 static uint32_t g_file_bytes = 0;
+static int      g_dir_made = 0;
+static volatile int g_sync = 1;     /* close after every line (bring-up)      */
 
 static void lock(void)   { if (g_mtx >= 0) ksceKernelLockMutex(g_mtx, 1, NULL); }
 static void unlock(void) { if (g_mtx >= 0) ksceKernelUnlockMutex(g_mtx, 1); }
@@ -113,8 +120,11 @@ static void file_open_locked(void)
 {
 	if (g_file_disabled || g_fd >= 0)
 		return;
-	ksceIoMkdir("ur0:data", 0777);
-	ksceIoMkdir(TS_KLOG_DIR, 0777);
+	if (!g_dir_made) {
+		ksceIoMkdir("ur0:data", 0777);
+		ksceIoMkdir(TS_KLOG_DIR, 0777);
+		g_dir_made = 1;
+	}
 
 	SceUID fd = ksceIoOpen(TS_KLOG_PATH,
 	                       SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0666);
@@ -127,7 +137,7 @@ static void file_open_locked(void)
 	g_fd = fd;
 }
 
-static void file_write_locked(const char *line, int len)
+static void file_write_locked(const char *line, int len, int sync)
 {
 	if (g_file_disabled)
 		return;
@@ -156,6 +166,10 @@ static void file_write_locked(const char *line, int len)
 		return;
 	}
 	g_file_bytes += (uint32_t)w1 + (uint32_t)w2;
+	if (sync) {
+		ksceIoClose(g_fd);   /* reopened (append) by the next line */
+		g_fd = -1;
+	}
 }
 
 /* ---- public API --------------------------------------------------------- */
@@ -168,6 +182,7 @@ void ts_klog_init(void)
 	g_file_disabled = 0;
 	g_file_bytes = 0;
 	g_fd = -1;
+	g_sync = 1;
 	if (g_mtx < 0)
 		g_mtx = ksceKernelCreateMutex("TsKLogMtx", 0, 0, NULL);
 	g_inited = 1;
@@ -185,6 +200,19 @@ void ts_klog_fini(void)
 	unlock();
 	if (g_mtx >= 0) { ksceKernelDeleteMutex(g_mtx); g_mtx = -1; }
 	g_inited = 0;
+}
+
+int ts_klog_sync(int on)
+{
+	lock();
+	int prev = g_sync;
+	g_sync = on ? 1 : 0;
+	if (g_fd >= 0) {   /* either way: what was written so far reaches the disk */
+		ksceIoClose(g_fd);
+		g_fd = -1;
+	}
+	unlock();
+	return prev;
 }
 
 static const char *level_name(int level)
@@ -235,7 +263,7 @@ void ts_klog(int level, const char *fmt, ...)
 	/* Secondary sink: the ur0 file, best-effort. */
 	if (g_inited) {
 		lock();
-		file_write_locked(line, pos);
+		file_write_locked(line, pos, g_sync || level <= TS_KLOG_WARN);
 		unlock();
 	}
 }

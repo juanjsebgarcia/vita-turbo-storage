@@ -2,7 +2,8 @@
  * hud.h - storage overlay, kernel side.
  *
  * Drawn by hooking SceDisplay's set-framebuffer path, so it appears over
- * whatever is on screen in any app. It draws only text the 1 Hz worker hands
+ * whatever is on screen in any app. The same hook tells fg.c which process is
+ * in front, so it is also installed for "Pause in Vita games". It draws only text the 1 Hz worker hands
  * it (ts_hud_set_text); the frame hook itself formats nothing.
  */
 #ifndef STORAGETURBO_HUD_H

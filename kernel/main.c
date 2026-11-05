@@ -3,15 +3,18 @@
  *
  * Responsibilities:
  *   - bring up the logger (klog.c);
+ *   - log the console model and the other kernel plugins (diag.c);
  *   - check the storage driver is one this build knows (3.60-3.74); on any
  *     other firmware install nothing at all;
  *   - the crash-loop boot guard: if the last start never finished, install
- *     nothing (safe mode);
+ *     nothing (safe mode). Until the boot is known good the guard names the
+ *     step under way, so the safe-mode line says where the last start died;
  *   - allocate the staging buffers and install the I/O hooks (stage.c), then
  *     load and apply the saved settings (settings.c);
  *   - run the 1 Hz worker: saves settings, allocates the verify buffer on
- *     demand, feeds the HUD (hud.c, installed only once the HUD is first
- *     switched on), logs status changes, re-arms the boot guard;
+ *     demand, feeds the HUD (hud.c, whose display hook is installed once the
+ *     HUD or "Pause in Vita games" first needs it), logs status changes and
+ *     what is in front (fg.c), re-arms the boot guard;
  *   - publish the user-callable "SceStorageTurbo" syscall library (see
  *     include/storageturbo_kernel_api.h and storageturbo_kernel.yml).
  *
@@ -34,6 +37,8 @@
 #include "stage.h"
 #include "hud.h"
 #include "hud_i18n.h"
+#include "diag.h"
+#include "fg.h"
 
 #define TS_GUARD_PATH  TS_DATA_DIR "/boot_guard"
 #define TS_GUARD_SECS  30
@@ -63,7 +68,7 @@ static SceUID   g_worker = -1;
 static volatile int g_run = 1;
 static volatile uint32_t g_uptime;
 
-static char g_guard_txt[48];   /* last content read, for the log */
+static char g_guard_txt[96];   /* last content read, for the log */
 static volatile int      g_guard_clear;   /* this start's guard is already back at 0 */
 static volatile uint32_t g_shell_up;      /* worker second SceShell reported up, +1  */
 static volatile int      g_safe_left;     /* safe mode left from Settings this boot  */
@@ -80,21 +85,41 @@ static char guard_read(void)
 	for (int i = 0; g_guard_txt[i]; i++)
 		if (g_guard_txt[i] < ' ' || g_guard_txt[i] > '~')
 			g_guard_txt[i] = '.';
+	for (int i = (int)strlen(g_guard_txt) - 1; i >= 0 &&
+	     (g_guard_txt[i] == ' ' || g_guard_txt[i] == '.'); i--)
+		g_guard_txt[i] = 0;   /* the padding and newline, for the log */
 	return g_guard_txt[0];
 }
 
 static void guard_write(char c, const char *who)
 {
-	char buf[64];
+	char buf[112];
 	int n = 0;
 	buf[n++] = c;
 	n += snprintf(buf + n, sizeof(buf) - n, " up=%u by=%s\n",
 	              (unsigned)ksceKernelGetSystemTimeLow(), who);
-	SceUID fd = ksceIoOpen(TS_GUARD_PATH, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0666);
+	/* Overwritten in place at a fixed length, never truncated: a crash between
+	 * a truncate and the write would leave an empty file, which reads as "no
+	 * guard" and skips safe mode. The first byte is the state. */
+	if (n > (int)sizeof(buf) - 1)
+		n = (int)sizeof(buf) - 1;
+	while (n < (int)sizeof(buf) - 1)
+		buf[n++] = ' ';
+	buf[n++] = '\n';
+	SceUID fd = ksceIoOpen(TS_GUARD_PATH, SCE_O_WRONLY | SCE_O_CREAT, 0666);
 	if (fd >= 0) {
 		ksceIoWrite(fd, buf, n);
 		ksceIoClose(fd);
 	}
+}
+
+/* Bring-up progress: the guard stays '1' but names the step about to run. If
+ * this start brings the console down, the next one's safe-mode line shows how
+ * far it got. File I/O: never call from the I/O hooks. */
+void ts_boot_mark(const char *stage)
+{
+	if (!g_guard_clear)
+		guard_write('1', stage);
 }
 
 static int firmware_known(void)
@@ -114,10 +139,24 @@ static int firmware_known(void)
 
 /* ---- 1 Hz worker ------------------------------------------------------------ */
 
-static const char *const k_dev_short[TS_DEV_COUNT] = { "SD2V", "INT ", "MC  " };   /* compact */
-static const char *const k_dev_log[TS_DEV_COUNT] = { "sd2vita", "internal", "memcard" };
+static const char *const k_dev_short[TS_DEV_COUNT] = { "SD2V", "MC  " };   /* compact */
+/* The display hook is needed for the HUD, and for "Pause in Vita games"
+ * whenever a storage would otherwise take the faster path. For the pause it
+ * waits until this start has cleared the boot guard, so a cold boot with the
+ * HUD off doesn't add the hook while the boot is still being judged. Never
+ * while the hooks are off. */
+static int display_hook_needed(const TsSettings *s)
+{
+	if (g_disabled != TS_DIS_NONE)
+		return 0;
+	return s->hud != TS_HUD_OFF ||
+	       (g_guard_clear && s->game_pause && s->enabled &&
+	        (s->sd2vita || s->memcard));
+}
+
+static const char *const k_dev_log[TS_DEV_COUNT] = { "sd2vita", "memcard" };
 /* HUD order: the removable storages first. */
-static const int k_hud_order[TS_DEV_COUNT] = { TS_DEV_SD2VITA, TS_DEV_MEMCARD, TS_DEV_INTERNAL };
+static const int k_hud_order[TS_DEV_COUNT] = { TS_DEV_SD2VITA, TS_DEV_MEMCARD };
 
 int module_get_export_func(SceUID pid, const char *modname, uint32_t libnid,
                            uint32_t funcnid, uintptr_t *func);
@@ -157,11 +196,18 @@ static void hud_feed(const TsDevState *now)
 	int n = 0;
 
 	ts_settings_copy(&s);
-	if (s.hud != TS_HUD_OFF)
+	static uint32_t lang_at;   /* the language rarely changes: read it every 30 s */
+	if (s.hud != TS_HUD_OFF && (lang_at == 0 || g_uptime - lang_at >= 30)) {
 		read_lang();
-	if (s.hud != TS_HUD_OFF && !ts_hud_installed() && !hud_failed && ts_hud_init() != TS_OK) {
-		hud_failed = 1;
-		TS_KLOGW("hud: could not install - HUD unavailable");
+		lang_at = g_uptime ? g_uptime : 1;
+	}
+	if (display_hook_needed(&s) && !ts_hud_installed() && !hud_failed) {
+		ts_boot_mark("display hook");
+		if (ts_hud_init() != TS_OK) {
+			hud_failed = 1;
+			TS_KLOGW("hud: display hook not installed - no HUD, and games are "
+			         "only recognised by their own transfers");
+		}
 	}
 	if (!ts_hud_installed())
 		s.hud = TS_HUD_OFF;
@@ -195,9 +241,9 @@ static void hud_feed(const TsDevState *now)
 		if (s.hud_recent && idle[i] >= TS_HUD_RECENT_SECS && now[i].status != TS_ST_FALLBACK)
 			continue;
 		const char *name = s.hud == TS_HUD_COMPACT ? k_dev_short[i]
-		                 : i == TS_DEV_INTERNAL ? hud_tr(g_lang, HTR_INTERNAL)
 		                 : i == TS_DEV_MEMCARD  ? hud_tr(g_lang, HTR_MEMCARD) : "SD2VITA";
 		const char *flag = now[i].status == TS_ST_FALLBACK ? hud_tr(g_lang, HTR_ERROR)
+		                 : now[i].status == TS_ST_PAUSED   ? hud_tr(g_lang, HTR_PAUSED)
 		                 : i == TS_DEV_MEMCARD && slow     ? hud_tr(g_lang, HTR_SLOW) : "";
 		snprintf(L[n++], TS_HUD_LINE_MAX, "%.14s R %.6s W %.6s MB/s%s%.12s", name, r, w,
 		         flag[0] ? " " : "", flag);
@@ -205,10 +251,11 @@ static void hud_feed(const TsDevState *now)
 			continue;
 		const char *state =
 			now[i].status == TS_ST_ACTIVE   ? hud_tr(g_lang, HTR_ON) :
+			now[i].status == TS_ST_PAUSED   ? hud_tr(g_lang, HTR_PAUSED) :
 			now[i].status == TS_ST_OFF      ? hud_tr(g_lang, HTR_OFF) :
 			now[i].status == TS_ST_FALLBACK ? hud_tr(g_lang, HTR_STANDARD) :
 			                                  hud_tr(g_lang, HTR_UNAVAILABLE);
-		snprintf(L[n++], TS_HUD_LINE_MAX, "  %u/%u MiB %.10s %.6s %u%s%.10s",
+		snprintf(L[n++], TS_HUD_LINE_MAX, "  %u/%u MiB %.12s %.6s %u%s%.10s",
 		         (unsigned)(rd >> 20), (unsigned)(wr >> 20), state,
 		         hud_tr(g_lang, HTR_ERR), (unsigned)now[i].errors,
 		         s.verify ? " " : "", s.verify ? hud_tr(g_lang, HTR_VERIFY) : "");
@@ -225,17 +272,19 @@ static const char *status_name(int st)
 	case TS_ST_ACTIVE:    return "active";
 	case TS_ST_FALLBACK:  return "FALLBACK (stock after an error)";
 	case TS_ST_NO_BUFFER: return "no buffer (stock)";
+	case TS_ST_PAUSED:    return "paused (game in front)";
 	default:              return "unavailable";
 	}
 }
 
 static void log_status(const TsDevState *d, int i)
 {
-	TS_KLOGI("dev %s: %s reads=%u (%u MiB) writes=%u (%u MiB) busy=%u errors=%u "
-	         "verified=%u mismatches=%u", k_dev_log[i],
+	TS_KLOGI("dev %s: %s reads=%u (%u MiB) writes=%u (%u MiB) busy=%u held=%u nc=%u "
+	         "errors=%u verified=%u mismatches=%u", k_dev_log[i],
 	         status_name(d->status), (unsigned)d->reads, (unsigned)d->read_mib,
 	         (unsigned)d->writes, (unsigned)d->write_mib, (unsigned)d->passthru,
-	         (unsigned)d->errors, (unsigned)d->verified, (unsigned)d->mismatches);
+	         (unsigned)d->held, (unsigned)d->uncached, (unsigned)d->errors, (unsigned)d->verified,
+	         (unsigned)d->mismatches);
 }
 
 static int worker(SceSize args, void *argp)
@@ -251,6 +300,7 @@ static int worker(SceSize args, void *argp)
 		g_uptime++;
 		ts_settings_flush();
 		ts_stage_worker_tick();
+		ts_fg_tick();
 		{
 			static int last_slow = -2;
 			int sl = ts_stage_memcard_slow();
@@ -267,11 +317,29 @@ static int worker(SceSize args, void *argp)
 			guard_write('0', "shell");
 			g_guard_clear = 1;
 			TS_KLOGI("SceShell up for %us - boot_guard set to 0", (unsigned)TS_GUARD_SHELL_SECS);
+			ts_diag_modules("boot done");
+			ts_klog_sync(0);
 		}
 		if (!g_guard_clear && g_uptime >= TS_GUARD_SECS) {
 			guard_write('0', "worker");
 			g_guard_clear = 1;
 			TS_KLOGI("stable for %us - boot_guard set to 0", (unsigned)TS_GUARD_SECS);
+			ts_diag_modules("boot done");
+			ts_klog_sync(0);
+		}
+		/* Until then, every few seconds: how long this start has run and how
+		 * much each storage has moved through the hooks (KiB). */
+		if (!g_guard_clear && g_uptime % 3 == 1) {
+			char m[64];
+			uint64_t rd[TS_DEV_COUNT], wr[TS_DEV_COUNT];
+
+			for (int i = 0; i < TS_DEV_COUNT; i++)
+				ts_stage_bytes(i, &rd[i], &wr[i]);
+			snprintf(m, sizeof(m), "run %us%s sd=%u mc=%u", (unsigned)g_uptime,
+			         g_shell_up ? " shell" : "",
+			         (unsigned)((rd[TS_DEV_SD2VITA] + wr[TS_DEV_SD2VITA]) >> 10),
+			         (unsigned)((rd[TS_DEV_MEMCARD] + wr[TS_DEV_MEMCARD]) >> 10));
+			ts_boot_mark(m);
 		}
 		/* Log a device on any status change, an error or a mismatch at once,
 		 * and its counters every five minutes while it is busy. */
@@ -294,22 +362,46 @@ static int worker(SceSize args, void *argp)
 
 /* ---- exported SceStorageTurbo API (user-callable) --------------------------- */
 
+static void state_fill(TsState *k)
+{
+	memset(k, 0, sizeof(*k));
+	k->size = sizeof(*k);
+	k->magic = TS_STATE_MAGIC;
+	ts_settings_copy(&k->settings);
+	k->disabled = g_disabled;
+	k->fingerprint = g_fingerprint;
+	k->verify_ready = ts_stage_verify_ready();
+	k->uptime_s = g_uptime;
+	k->memcard_slow = ts_stage_memcard_slow();
+	ts_stage_get(k->dev, g_disabled == TS_DIS_NONE);
+	ts_fg_get(&k->fg_class, k->fg_title);
+	k->paused = g_disabled == TS_DIS_NONE && ts_fg_paused();
+}
+
+int tsGetState2(TsState *out, unsigned int size)
+{
+	TsState k;
+	if (!out || size < 2 * sizeof(uint32_t))
+		return TS_ERR_ARG;
+	state_fill(&k);
+	if (size > sizeof(k))
+		size = sizeof(k);
+	if (ksceKernelMemcpyKernelToUser(out, &k, size) < 0)
+		return TS_ERR_ARG;
+	return TS_OK;
+}
+
+_Static_assert(sizeof(TsState) >= TS_STATE_V030_SIZE,
+               "the legacy tsGetState copies TS_STATE_V030_SIZE bytes out of a TsState");
+
 int tsGetState(TsState *out)
 {
 	TsState k;
 	if (!out)
 		return TS_ERR_ARG;
-	memset(&k, 0, sizeof(k));
-	k.size = sizeof(k);
-	k.magic = TS_STATE_MAGIC;
-	ts_settings_copy(&k.settings);
-	k.disabled = g_disabled;
-	k.fingerprint = g_fingerprint;
-	k.verify_ready = ts_stage_verify_ready();
-	k.uptime_s = g_uptime;
-	k.memcard_slow = ts_stage_memcard_slow();
-	ts_stage_get(k.dev, g_disabled == TS_DIS_NONE);
-	if (ksceKernelMemcpyKernelToUser(out, &k, sizeof(k)) < 0)
+	state_fill(&k);
+	k.magic = 0;   /* a 0.3.0 client must not read this layout */
+	if (ksceKernelMemcpyKernelToUser(out, &k, TS_STATE_V030_SIZE) < 0)
 		return TS_ERR_ARG;
 	return TS_OK;
 }
@@ -332,11 +424,24 @@ int tsSelfTestPing(void)
  * settings.c) - nor can it create a kernel thread. So module_start leaves this
  * thread waiting in safe mode, and leaving it from Settings only signals it. */
 static SceUID g_safe_sema = -1;
+static SceUID g_safe_thread = -1;
+static volatile int g_safe_stop;   /* module_stop: the helper must just exit */
 
 static int safe_leave_thread(SceSize args, void *argp)
 {
+	SceUInt32 wait = TS_GUARD_SECS * 1000 * 1000;
+
 	(void)args; (void)argp;
-	if (ksceKernelWaitSema(g_safe_sema, 1, NULL) < 0)
+	/* No worker in safe mode: once the boot has settled, list the plugins
+	 * loaded after this one here instead. */
+	if (ksceKernelWaitSema(g_safe_sema, 1, &wait) < 0) {
+		if (g_safe_stop)
+			return ksceKernelExitDeleteThread(0);
+		ts_diag_modules("boot done");
+		if (ksceKernelWaitSema(g_safe_sema, 1, NULL) < 0)
+			return ksceKernelExitDeleteThread(0);
+	}
+	if (g_safe_stop)
 		return ksceKernelExitDeleteThread(0);
 	guard_write('0', "settings");
 	TS_KLOGI("safe mode left from Settings - everything installs at the next start");
@@ -379,12 +484,15 @@ int module_start(SceSize argc, const void *args)
 	(void)argc; (void)args;
 
 	ts_klog_init();   /* FIRST, so the whole bring-up is captured (makes the dir) */
-	TS_KLOGI("=== SceStorageTurbo kernel v%s start ===", TS_VERSION_STR);
+	TS_KLOGI("=== SceStorageTurbo kernel v%s start ===", TS_BUILD_STR);
+	ts_diag_console();
+	ts_diag_modules("at start");
 
 	if (!firmware_known()) {
 		g_disabled = TS_DIS_FIRMWARE;
 		TS_KLOGW("storage driver fingerprint 0x%08x not supported - nothing installed",
 		         (unsigned)g_fingerprint);
+		ts_settings_init(0);   /* shown as saved, not applied */
 		return SCE_KERNEL_START_SUCCESS;
 	}
 	TS_KLOGI("storage driver fingerprint 0x%08x: supported", (unsigned)g_fingerprint);
@@ -398,10 +506,12 @@ int module_start(SceSize argc, const void *args)
 		g_disabled = TS_DIS_SAFE;
 		TS_KLOGW("SAFE MODE: last start didn't finish [%s], nothing installed", g_guard_txt);
 		TS_KLOGW("to leave: Settings > System > Turbo Storage, untick Safe mode, restart");
+		ts_settings_init(0);   /* shown as saved, not applied */
 		g_safe_sema = ksceKernelCreateSema("SceStorageTurboSafe", 0, 0, 1, NULL);
 		SceUID t = g_safe_sema < 0 ? -1 :
 		           ksceKernelCreateThread("SceStorageTurboSafe", safe_leave_thread,
 		                                  0x80, 0x2000, 0, 0, NULL);
+		g_safe_thread = t;
 		if (t < 0 || ksceKernelStartThread(t, 0, NULL) < 0)
 			TS_KLOGW("safe mode helper not started (0x%08x): Settings can't leave it",
 			         (unsigned)t);
@@ -410,11 +520,13 @@ int module_start(SceSize argc, const void *args)
 	TS_KLOGI("boot_guard was [%s], setting 1", g_guard_txt);
 	guard_write('1', "start");
 
-	if (ts_stage_init() != TS_OK) {
+	ts_fg_init();
+	if (ts_stage_init() != TS_OK) {   /* marks its own steps */
 		g_disabled = TS_DIS_HOOKS;
 		TS_KLOGW("storage hooks NOT installed: storage stays stock");
 	}
-	ts_settings_init();   /* defaults, then the saved file; applies to stage.c */
+	ts_boot_mark("settings");
+	ts_settings_init(1);  /* defaults, then the saved file; applies to stage.c */
 
 	g_worker = ksceKernelCreateThread("SceStorageTurboWorker", worker, 0x80, 0x2000, 0, 0, NULL);
 	if (g_worker >= 0)
@@ -423,6 +535,7 @@ int module_start(SceSize argc, const void *args)
 		TS_KLOGW("worker thread not started (0x%08x): settings will not be saved",
 		         (unsigned)g_worker);
 
+	ts_boot_mark("started");
 	TS_KLOGI("kernel start complete");
 	return SCE_KERNEL_START_SUCCESS;
 }
@@ -432,12 +545,25 @@ int module_stop(SceSize argc, const void *args)
 	(void)argc; (void)args;
 	TS_KLOGI("=== SceStorageTurbo kernel stop ===");
 	if (g_disabled == TS_DIS_FIRMWARE || g_disabled == TS_DIS_SAFE) {
+		if (g_safe_sema >= 0) {
+			/* Deleting the semaphore wakes the helper with an error; wait for
+			 * it to leave before this module's code goes away. */
+			g_safe_stop = 1;
+			ksceKernelDeleteSema(g_safe_sema);
+			if (g_safe_thread >= 0) {
+				SceUInt32 t = 1000 * 1000;
+				ksceKernelWaitThreadEnd(g_safe_thread, NULL, &t);
+			}
+		}
 		ts_klog_fini();
 		return SCE_KERNEL_STOP_SUCCESS;
 	}
 	g_run = 0;
-	if (g_worker >= 0)
+	if (g_worker >= 0) {
 		ksceKernelWaitThreadEnd(g_worker, NULL, NULL);
+		ksceKernelDeleteThread(g_worker);
+		g_worker = -1;
+	}
 	ts_hud_fini();
 	ts_stage_fini();
 	ts_settings_flush();

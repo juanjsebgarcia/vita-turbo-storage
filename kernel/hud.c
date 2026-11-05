@@ -26,13 +26,15 @@
 #include "font8x8.h"
 #include "klog.h"
 #include "settings.h"                   /* g_ts_settings.hud_game             */
+#include "fg.h"
 #include "../include/storageturbo.h"
 
 #define HUD_FG         0xFFFFFFFFu /* opaque white (ABGR8888)                 */
 #define HUD_SHADOW     0xFF000000u /* opaque black drop shadow                */
 
 static SceUID         g_hook = -1;
-static tai_hook_ref_t g_ref;
+static volatile tai_hook_ref_t g_ref;   /* set by taiHEN just after the hook is
+                                         * live: read through hud_ref()       */
 
 typedef struct {
 	char lines[TS_HUD_LINES][TS_HUD_LINE_MAX];
@@ -139,14 +141,28 @@ static inline void hud_dacr_restore(uint32_t prev)
 	__asm__ volatile("isb");
 }
 
+/* taiHEN makes the hook live a moment before it stores the ref, and frames
+ * keep coming while the worker installs it: wait for the ref (bounded; a
+ * single load once it is set) and never continue through 0. */
+static tai_hook_ref_t hud_ref(void)
+{
+	for (int i = 0; i < 2000 && g_ref == 0; i++)
+		ksceKernelDelayThread(10);
+	return g_ref;
+}
+
 /* ksceDisplaySetFrameBufInternal(head, index, pParam, sync) - the kernel
  * funnel every set-framebuffer call passes through, so the overlay is
  * system-wide. Draw only for the main panel (head 0). */
 static int hook_set_framebuf(int head, int index,
                              const SceDisplayFrameBuf *pParam, int sync)
 {
-	int ret = TAI_CONTINUE(int, g_ref, head, index, pParam, sync);
+	tai_hook_ref_t ref = hud_ref();
+	if (!ref)
+		return 0x80010005;
+	int ret = TAI_CONTINUE(int, ref, head, index, pParam, sync);
 
+	ts_fg_frame();   /* "Pause in Vita games": who is in front, on any display */
 	if (head != 0 || !pParam || !pParam->base)
 		return ret;
 	int w = (int)pParam->width, h = (int)pParam->height,
@@ -187,12 +203,13 @@ static int hook_set_framebuf(int head, int index,
 int ts_hud_init(void)
 {
 	memset(g_text, 0, sizeof(g_text));
+	g_ref = 0;
 
 	/* NIDs from the VitaSDK db (vita-headers db/360/SceDisplay.yml), present
 	 * unchanged in 3.65 and 3.68:
 	 *   SceDisplayForDriver library    = 0x9FED47AC
 	 *   ksceDisplaySetFrameBufInternal = 0x16466675 */
-	g_hook = taiHookFunctionExportForKernel(KERNEL_PID, &g_ref,
+	g_hook = taiHookFunctionExportForKernel(KERNEL_PID, (tai_hook_ref_t *)&g_ref,
 	                                        "SceDisplay",
 	                                        0x9FED47AC, /* SceDisplayForDriver  */
 	                                        0x16466675, /* ...SetFrameBufInternal */
@@ -221,6 +238,7 @@ void ts_hud_fini(void)
 	if (g_hook >= 0) {
 		taiHookReleaseForKernel(g_hook, g_ref);
 		g_hook = -1;
+		g_ref = 0;
 	}
 }
 

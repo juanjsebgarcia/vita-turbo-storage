@@ -14,8 +14,7 @@
 #define STORAGETURBO_HUD_I18N_H
 
 enum hud_tr_tok {
-	HTR_INTERNAL = 0, /* the internal storage's name           */
-	HTR_ON,           /* the faster path is in use             */
+	HTR_ON = 0,       /* the faster path is in use             */
 	HTR_OFF,          /* the faster path is switched off       */
 	HTR_STANDARD,     /* back to standard speed (after error)  */
 	HTR_ERROR,        /* marks a storage that hit an error     */
@@ -24,6 +23,7 @@ enum hud_tr_tok {
 	HTR_VERIFY,       /* verify mode is on                     */
 	HTR_MEMCARD,      /* the memory card's name                */
 	HTR_SLOW,         /* memory card slow mode is on           */
+	HTR_PAUSED,       /* stock for now: a game is in front     */
 	HTR_COUNT
 };
 

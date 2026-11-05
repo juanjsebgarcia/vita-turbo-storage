@@ -34,6 +34,9 @@ typedef struct TsState {
 	uint32_t   uptime_s;         /* seconds since the kernel module started   */
 	int32_t    memcard_slow;     /* memory card slow mode: 1 on, 0 off, -1 n/a */
 	TsDevState dev[TS_DEV_COUNT];
+	int32_t    fg_class;         /* TS_FG_*: the app in front                 */
+	char       fg_title[12];     /* its title id ("" if none yet)             */
+	int32_t    paused;           /* 1: "Pause in Vita games" is holding storage stock */
 } TsState;
 
 /* TsState.disabled */
@@ -44,9 +47,19 @@ typedef struct TsState {
 
 #define TS_STATE_MAGIC  0x54535354u   /* 'TSST' */
 
-/* Copy the current state to *out (user pointer). Returns TS_OK or
- * TS_ERR_ARG. */
+/* Copy the current state to *out (user pointer), at most `size` bytes (pass
+ * sizeof(TsState)); TsState.size says how much the kernel has. Returns TS_OK
+ * or TS_ERR_ARG. Use this one: a client built against another version can't
+ * be overrun. */
+int tsGetState2(TsState *out, unsigned int size);
+
+/* Kept for clients from 0.3.0 and earlier, whose TsState was 172 bytes: it
+ * writes only that much, with the magic cleared, so such a client reports the
+ * plugin as not running instead of reading a different layout. */
 int tsGetState(TsState *out);
+#define TS_STATE_V030_SIZE  172u   /* TsState is 180 bytes since the built-in storage
+                                    * was removed: a compile-time check in main.c
+                                    * keeps it at least this large               */
 
 /* Apply one setting (enum ts_key) and save it. Returns TS_OK, or TS_ERR_ARG
  * for an unknown key or an out-of-range value (nothing changes then). */

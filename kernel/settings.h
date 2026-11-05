@@ -14,7 +14,9 @@
  * through ts_settings_set(). */
 extern volatile TsSettings g_ts_settings;
 
-void ts_settings_init(void);                 /* defaults, then the saved file  */
+/* Defaults, then the saved file. apply = 0 (safe mode, unsupported firmware)
+ * only loads the values so the Settings page shows them. */
+void ts_settings_init(int apply);
 int  ts_settings_set(int key, int value);    /* validate + apply; TS_ERR_ARG   */
 void ts_settings_copy(TsSettings *out);
 void ts_settings_flush(void);                /* save if changed (worker only)  */

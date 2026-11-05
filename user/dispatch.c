@@ -9,12 +9,15 @@
  *   version                   plugin version
  *   ping                      round-trip to the kernel module
  *   status                    settings, per-device status and counters
- *   set <key> <value>         sd2vita|internal|verify|devmode 0/1,
+ *   set <key> <value>         enabled|sd2vita|memcard|game_pause|
+ *                             verify|devmode|hud_game|hud_recent 0/1,
  *                             hud 0-2 (off/compact/extended), hud_pos 0-3
  *
- * BOOT-SAFE: module_start only starts this thread; it waits ~3 s before any
- * SceNet call (touching the network during early SceShell boot can wedge the
- * whole boot), then polls the kernel settings once a second for Developer mode.
+ * BOOT-SAFE: module_start only starts a small watch thread; it waits ~3 s
+ * before anything else (touching the network during early SceShell boot can
+ * wedge the whole boot), then polls the kernel settings every 5 s. The
+ * server thread, with its larger stack, exists only while Developer mode is
+ * on, so a normal console costs SceShell one 4 KiB stack.
  */
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/net/net.h>
@@ -29,13 +32,17 @@
 #define TS_DEFERRED_BRINGUP_DELAY_US  (3 * 1000 * 1000)
 
 static const char *const k_keys[TS_KEY_COUNT] = {
-	"sd2vita", "internal", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game", "hud_recent",
+	"sd2vita", "-retired1", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game", "hud_recent",
+	"enabled", "game_pause",
 };
-static const char *const k_status[] = { "off", "active", "fallback", "no-buffer", "unavailable" };
-static const char *const k_dev[TS_DEV_COUNT] = { "sd2vita", "internal", "memcard" };
+static const char *const k_status[] = { "off", "active", "fallback", "no-buffer", "unavailable",
+                                        "paused" };
+static const char *const k_dev[TS_DEV_COUNT] = { "sd2vita", "memcard" };
+static const char *const k_fg[] = { "system", "app", "Vita game", "PSP emulator" };
 
-static int    g_run = 0;
-static SceUID g_thread = -1;
+static volatile int g_run = 0;
+static SceUID g_thread = -1;          /* server: only while Developer mode is on */
+static volatile int g_thread_done;    /* the server thread has returned          */
 static volatile int g_srv = -1;
 static SceUID g_watch = -1;
 
@@ -110,36 +117,39 @@ void ts_dispatch_exec(const char *line, char *out, int cap)
 	out[0] = 0;
 	if (!strcmp(line, "help")) {
 		put(p, end, "commands: help | version | ping | status | set <key> <value>\n"
-		            "keys: sd2vita memcard internal verify devmode hud_game hud_recent (0/1), hud (0-2), hud_pos (0-3)");
+		            "keys: sd2vita memcard verify devmode hud_game hud_recent (0/1), hud (0-2), hud_pos (0-3)");
 	} else if (!strcmp(line, "version")) {
-		put(p, end, "turbo-storage %s", TS_VERSION_STR);
+		put(p, end, "turbo-storage %s", TS_BUILD_STR);
 	} else if (!strcmp(line, "ping")) {
 		int r = tsSelfTestPing();
 		put(p, end, "ping %s (0x%08x)", r == (int)TS_SELFTEST_MAGIC ? "ok" : "FAILED", (unsigned)r);
 	} else if (!strcmp(line, "status")) {
 		TsState st;
 
-		if (tsGetState(&st) != TS_OK || st.magic != TS_STATE_MAGIC) {
+		if (tsGetState2(&st, sizeof(st)) != TS_OK || st.magic != TS_STATE_MAGIC) {
 			put(p, end, "status: kernel module not answering");
 			return;
 		}
 		p += put(p, end, "turbo-storage %s disabled=%d fingerprint=0x%08x uptime=%us verify_ready=%d\n",
-		         TS_VERSION_STR, (int)st.disabled, (unsigned)st.fingerprint,
+		         TS_BUILD_STR, (int)st.disabled, (unsigned)st.fingerprint,
 		         (unsigned)st.uptime_s, (int)st.verify_ready);
-		p += put(p, end, "settings: sd2vita=%d memcard=%d internal=%d verify=%d hud=%d hud_pos=%d hud_game=%d hud_recent=%d devmode=%d\n",
-		         (int)st.settings.sd2vita, (int)st.settings.memcard, (int)st.settings.internal,
+		p += put(p, end, "settings: enabled=%d game_pause=%d sd2vita=%d memcard=%d verify=%d hud=%d hud_pos=%d hud_game=%d hud_recent=%d devmode=%d\n",
+		         (int)st.settings.enabled, (int)st.settings.game_pause,
+		         (int)st.settings.sd2vita, (int)st.settings.memcard,
 		         (int)st.settings.verify, (int)st.settings.hud, (int)st.settings.hud_pos, (int)st.settings.hud_game, (int)st.settings.hud_recent,
 		         (int)st.settings.devmode);
 		p += put(p, end, "memcard slow mode: %s\n", st.memcard_slow == 1 ? "ON" :
 		         st.memcard_slow == 0 ? "off" : "unknown");
+		p += put(p, end, "in front: %s (%s)%s\n", st.fg_title[0] ? st.fg_title : "-",
+		         k_fg[st.fg_class & 3], st.paused ? " - storage stock" : "");
 		for (int i = 0; i < TS_DEV_COUNT; i++) {
 			const TsDevState *d = &st.dev[i];
-			int s = d->status >= 0 && d->status <= TS_ST_UNAVAIL ? d->status : TS_ST_UNAVAIL;
+			int s = d->status >= 0 && d->status <= TS_ST_PAUSED ? d->status : TS_ST_UNAVAIL;
 
-			p += put(p, end, "%s: %s reads=%u (%u MiB) writes=%u (%u MiB) busy=%u errors=%u "
+			p += put(p, end, "%s: %s reads=%u (%u MiB) writes=%u (%u MiB) busy=%u held=%u nc=%u errors=%u "
 			         "verified=%u mismatches=%u\n", k_dev[i], k_status[s], (unsigned)d->reads,
 			         (unsigned)d->read_mib, (unsigned)d->writes, (unsigned)d->write_mib,
-			         (unsigned)d->passthru, (unsigned)d->errors, (unsigned)d->verified,
+			         (unsigned)d->passthru, (unsigned)d->held, (unsigned)d->uncached, (unsigned)d->errors, (unsigned)d->verified,
 			         (unsigned)d->mismatches);
 		}
 		if (p > out && p[-1] == '\n')
@@ -149,6 +159,8 @@ void ts_dispatch_exec(const char *line, char *out, int cap)
 		int key = -1, v;
 
 		for (int i = 0; i < TS_KEY_COUNT; i++) {
+			if (i == TS_KEY_RETIRED1)
+				continue;   /* removed setting: not addressable */
 			int n = (int)strlen(k_keys[i]);
 			if (!strncmp(k, k_keys[i], n) && k[n] == ' ') {
 				key = i;
@@ -171,21 +183,16 @@ void ts_dispatch_exec(const char *line, char *out, int cap)
 static int devmode_on(void)
 {
 	TsState st;
-	return tsGetState(&st) == TS_OK && st.magic == TS_STATE_MAGIC && st.settings.devmode;
+	return tsGetState2(&st, sizeof(st)) == TS_OK && st.magic == TS_STATE_MAGIC && st.settings.devmode;
 }
 
 static int server_thread(SceSize args, void *argp)
 {
 	(void)args; (void)argp;
 
-	sceKernelDelayThread(TS_DEFERRED_BRINGUP_DELAY_US);
 	/* Self-healing listener, as in Wi-Fi Turbo: a dead socket is rebuilt rather
-	 * than spun on; no socket at all while Developer mode is off. */
-	while (g_run) {
-		if (!devmode_on()) {
-			sceKernelDelayThread(1000 * 1000);
-			continue;
-		}
+	 * than spun on. Returns once Developer mode is off. */
+	while (g_run && devmode_on()) {
 		int srv = sceNetSocket("tsdev", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
 		if (srv >= 0) {
 			SceNetSockaddrIn addr;
@@ -246,40 +253,62 @@ static int server_thread(SceSize args, void *argp)
 		sceNetSocketClose(srv);
 		TS_LOGI("[DEV] listener closed");
 	}
+	g_thread_done = 1;
 	return 0;
 }
 
+static void server_reap(void)
+{
+	if (g_thread < 0)
+		return;
+	sceKernelWaitThreadEnd(g_thread, NULL, NULL);
+	sceKernelDeleteThread(g_thread);
+	g_thread = -1;
+}
+
 /* Developer mode is switched in the Settings app, a different process, so
- * nothing there can reach this socket. Watch the setting once a second and
- * close the listener when it goes off: that wakes the blocked accept() and the
- * server loop parks (Wi-Fi Turbo closes its socket the same way). */
+ * nothing there can reach this socket. Watch the setting every 5 s: start
+ * the server when it goes on; when it goes off, close the listener (that wakes
+ * the blocked accept() and the server returns, as Wi-Fi Turbo closes its
+ * socket) and reap the thread. */
 static int watch_thread(SceSize args, void *argp)
 {
 	(void)args; (void)argp;
+	sceKernelDelayThread(TS_DEFERRED_BRINGUP_DELAY_US);
 	while (g_run) {
-		sceKernelDelayThread(1000 * 1000);
+		int on = devmode_on();
+		if (g_thread >= 0 && g_thread_done)
+			server_reap();
+		if (on && g_thread < 0) {
+			g_thread_done = 0;
+			g_thread = sceKernelCreateThread("TsDevServer", server_thread, 0x40, 0x4000,
+			                                 0, 0, NULL);
+			if (g_thread >= 0 && sceKernelStartThread(g_thread, 0, NULL) < 0) {
+				sceKernelDeleteThread(g_thread);
+				g_thread = -1;
+			}
+		}
 		int srv = g_srv;
-		if (srv >= 0 && !devmode_on())
+		if (srv >= 0 && !on)
 			sceNetSocketClose(srv);
+		for (int i = 0; i < 5 && g_run; i++)     /* every 5 s; stops within 1 s */
+			sceKernelDelayThread(1000 * 1000);
 	}
 	return 0;
 }
 
 void ts_dispatch_start(void)
 {
-	if (g_thread >= 0)
+	if (g_watch >= 0)
 		return;
 	g_run = 1;
-	g_thread = sceKernelCreateThread("TsDevServer", server_thread, 0x40, 0x4000, 0, 0, NULL);
-	if (g_thread >= 0)
-		sceKernelStartThread(g_thread, 0, NULL);
-	else
-		g_run = 0;
-	if (g_run) {
-		g_watch = sceKernelCreateThread("TsDevWatch", watch_thread, 0x40, 0x1000, 0, 0, NULL);
-		if (g_watch >= 0)
-			sceKernelStartThread(g_watch, 0, NULL);
+	g_watch = sceKernelCreateThread("TsDevWatch", watch_thread, 0x40, 0x1000, 0, 0, NULL);
+	if (g_watch >= 0 && sceKernelStartThread(g_watch, 0, NULL) < 0) {
+		sceKernelDeleteThread(g_watch);
+		g_watch = -1;
 	}
+	if (g_watch < 0)
+		g_run = 0;
 }
 
 void ts_dispatch_stop(void)
@@ -292,9 +321,5 @@ void ts_dispatch_stop(void)
 		sceKernelDeleteThread(g_watch);
 		g_watch = -1;
 	}
-	if (g_thread >= 0) {
-		sceKernelWaitThreadEnd(g_thread, NULL, NULL);
-		sceKernelDeleteThread(g_thread);
-		g_thread = -1;
-	}
+	server_reap();
 }

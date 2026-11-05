@@ -1,6 +1,6 @@
 /*
- * settings_ui.h - Settings-app (NPXS10015) hooks of storageturbo.suprx.
- * settings_app/main.c installs them at module_start.
+ * settings_ui.h - Settings-app (NPXS10015) hooks of storageturbo_settings.suprx.
+ * settings_app/settings_main.c installs them at module_start.
  */
 #ifndef STORAGETURBO_SETTINGS_UI_H
 #define STORAGETURBO_SETTINGS_UI_H

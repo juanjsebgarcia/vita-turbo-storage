@@ -10,11 +10,14 @@
  *     page's own closing </setting_list>;
  *   - the SceRegMgr get/set/info in SceSystemSettingsCore: back the rows with a
  *     private /CONFIG/TURBOSTOR namespace that goes straight to the kernel
- *     module's syscalls (tsGetState / tsSetSetting), so a change applies and
+ *     module's syscalls (tsGetState2 / tsSetSetting), so a change applies and
  *     is saved immediately - no registry write;
  *   - scePafToplevelGetText: every title and hint carries an id resolved here.
  *     Each device row's hint is its live status, read from the kernel module
  *     whenever the page draws it.
+ * With the master switch (Enable Turbo Storage) off, the rows it governs are
+ * greyed through SceSystemSettingsCore's own enable/grey exports, the way
+ * Settings greys its dependent rows.
  *
  * All hooks are import hooks (passthrough), so if anything doesn't match, the
  * page simply doesn't appear; nothing crashes.
@@ -44,7 +47,8 @@ static void s_cpy(char *d, const char *s, int n){ for(int i=0;i<n;i++) d[i]=s[i]
 
 /* Registry key names under /CONFIG/TURBOSTOR, in enum ts_key order. */
 static const char *const g_keys[TS_KEY_COUNT] = {
-	"sd2vita", "internal", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game", "hud_recent",
+	"sd2vita", "retired1", "verify", "hud", "hud_pos", "devmode", "memcard", "hud_game", "hud_recent",
+	"enabled", "game_pause",
 };
 
 #define ROW_LIST(k) \
@@ -63,9 +67,10 @@ static const char *const g_keys[TS_KEY_COUNT] = {
 	"<toggle_switch id=\"ts_safe_mode\" title=\"ts_t_safe_mode\" icon=\"tex_spanner\" " \
 	"hint=\"ts_h_safe_mode\" key=\"/CONFIG/TURBOSTOR/safe_mode\"/>"
 #define X_ROWS \
+	ROW_TOGGLE("enabled") \
 	ROW_TOGGLE("sd2vita") \
 	ROW_TOGGLE("memcard") \
-	ROW_TOGGLE("internal") \
+	ROW_TOGGLE("game_pause") \
 	ROW_LIST("hud") \
 		ITEM("ts_i_hud0", "0") ITEM("ts_i_hud1", "1") ITEM("ts_i_hud2", "2") \
 	"</list>" \
@@ -78,6 +83,48 @@ static const char *const g_keys[TS_KEY_COUNT] = {
 	"</setting_list>"
 static const char X_GROUP[]      = X_HEAD X_ROWS;
 static const char X_GROUP_SAFE[] = X_HEAD X_SAFE_ROW X_ROWS;
+
+/* Rows that do nothing while the master switch is off: greyed then. They come
+ * after "enabled" and before "hud", whose get hook greys them as the page is
+ * built (there is no page-built callback; by then these rows exist). */
+static const char *const k_master_rows[] = {
+	"ts_sd2vita", "ts_memcard", "ts_game_pause",
+};
+
+/* SceSystemSettingsCore: enable / grey a row by id (grey = 70% alpha, no
+ * input). Both return quietly if the row is not on the page. Resolved once
+ * the core module is loaded; without them the rows simply stay enabled. */
+static int (*g_row_enable)(const char *id);
+static int (*g_row_grey)(const char *id);
+
+static void master_rows(int on)
+{
+	int (*f)(const char *) = on ? g_row_enable : g_row_grey;
+
+	if (!f)
+		return;
+	for (unsigned i = 0; i < sizeof(k_master_rows) / sizeof(k_master_rows[0]); i++)
+		f(k_master_rows[i]);
+}
+
+/* Safe mode or unsupported firmware: the rows show the saved values but
+ * nothing can change, so grey every keyed row (not the safe-mode row). Run
+ * from each row's get, since a row only exists once the page has asked for
+ * its value; a row not on the page yet is skipped quietly. */
+static void all_rows_grey(void)
+{
+	char id[24] = "ts_";
+
+	if (!g_row_grey)
+		return;
+	for (int k = 0; k < TS_KEY_COUNT; k++) {
+		int n = 3;
+		for (const char *c = g_keys[k]; *c && n < (int)sizeof(id) - 1; c++)
+			id[n++] = *c;
+		id[n] = 0;
+		g_row_grey(id);
+	}
+}
 
 /* Accept a System page up to this size; leave it alone if it is ever bigger. */
 #define TS_PAGE_ORIG_MAX 16384
@@ -125,7 +172,7 @@ static const ts_u16 *device_hint(int dev, int help_id)
 	Line l = { {0}, 0 };
 	int id = -1;
 
-	if (tsGetState(&st) != TS_OK || st.magic != TS_STATE_MAGIC)
+	if (tsGetState2(&st, sizeof(st)) != TS_OK || st.magic != TS_STATE_MAGIC)
 		id = TS_I18N_ST_NO_KERNEL;
 	else if (st.disabled == TS_DIS_FIRMWARE)
 		id = TS_I18N_ST_FIRMWARE;
@@ -133,6 +180,8 @@ static const ts_u16 *device_hint(int dev, int help_id)
 		id = TS_I18N_ST_HOOKS;
 	else if (st.disabled == TS_DIS_SAFE)
 		id = TS_I18N_ST_SAFE;
+	else if (!st.settings.enabled)
+		id = TS_I18N_ST_MASTER_OFF;
 	else if (st.dev[dev].status == TS_ST_FALLBACK)
 		id = TS_I18N_ST_FALLBACK;
 	else if (st.dev[dev].status == TS_ST_NO_BUFFER)
@@ -151,20 +200,22 @@ static const ts_u16 *device_hint(int dev, int help_id)
 }
 
 /* Row title / help ids per setting key; -1 = not on the page (verify is a
- * diagnostic, set over the command port only). */
+ * diagnostic, set over the command port only; retired1 is a removed setting). */
 static const signed char k_row[TS_KEY_COUNT] = {
-	[TS_KEY_SD2VITA] = TS_I18N_ROW_SD2VITA, [TS_KEY_INTERNAL] = TS_I18N_ROW_INTERNAL,
+	[TS_KEY_SD2VITA] = TS_I18N_ROW_SD2VITA, [TS_KEY_RETIRED1] = -1,
 	[TS_KEY_VERIFY] = -1, [TS_KEY_HUD] = TS_I18N_ROW_HUD,
 	[TS_KEY_HUD_POS] = TS_I18N_ROW_HUD_POS, [TS_KEY_DEVMODE] = TS_I18N_ROW_DEVMODE,
 	[TS_KEY_MEMCARD] = TS_I18N_ROW_MEMCARD, [TS_KEY_HUD_GAME] = TS_I18N_ROW_HUD_GAME,
 	[TS_KEY_HUD_RECENT] = TS_I18N_ROW_HUD_RECENT,
+	[TS_KEY_ENABLED] = TS_I18N_ROW_ENABLED, [TS_KEY_GAME_PAUSE] = TS_I18N_ROW_GAME_PAUSE,
 };
 static const signed char k_hint[TS_KEY_COUNT] = {
-	[TS_KEY_SD2VITA] = TS_I18N_HINT_SD2VITA, [TS_KEY_INTERNAL] = TS_I18N_HINT_INTERNAL,
+	[TS_KEY_SD2VITA] = TS_I18N_HINT_SD2VITA, [TS_KEY_RETIRED1] = -1,
 	[TS_KEY_VERIFY] = -1, [TS_KEY_HUD] = TS_I18N_HINT_HUD,
 	[TS_KEY_HUD_POS] = TS_I18N_HINT_HUD_POS, [TS_KEY_DEVMODE] = TS_I18N_HINT_DEVMODE,
 	[TS_KEY_MEMCARD] = TS_I18N_HINT_MEMCARD, [TS_KEY_HUD_GAME] = TS_I18N_HINT_HUD_GAME,
 	[TS_KEY_HUD_RECENT] = TS_I18N_HINT_HUD_RECENT,
+	[TS_KEY_ENABLED] = TS_I18N_HINT_ENABLED, [TS_KEY_GAME_PAUSE] = TS_I18N_HINT_GAME_PAUSE,
 };
 
 static int key_index(const char *name)
@@ -192,8 +243,6 @@ static const ts_u16 *ts_text(const char *id)
 	if (s_pfx(id, "ts_h_") && (k = key_index(id + 5)) >= 0 && k_hint[k] >= 0) {
 		if (k == TS_KEY_SD2VITA)
 			return device_hint(TS_DEV_SD2VITA, k_hint[k]);
-		if (k == TS_KEY_INTERNAL)
-			return device_hint(TS_DEV_INTERNAL, k_hint[k]);
 		if (k == TS_KEY_MEMCARD)
 			return device_hint(TS_DEV_MEMCARD, k_hint[k]);
 		return fixed_text(k_hint[k]);
@@ -301,10 +350,15 @@ static int get_hook(const char *cat, const char *name, int *val)
 	if (is_ts(cat) && val) {
 		TsState st;
 		int k = name ? key_index(name) : -1;
-		if (k >= 0 && tsGetState(&st) == TS_OK && st.magic == TS_STATE_MAGIC)
+		if (k >= 0 && tsGetState2(&st, sizeof(st)) == TS_OK && st.magic == TS_STATE_MAGIC) {
 			*val = *ts_setting_field(&st.settings, k);
-		else
+			if (st.disabled == TS_DIS_SAFE || st.disabled == TS_DIS_FIRMWARE)
+				all_rows_grey();
+			else if (k == TS_KEY_HUD)     /* the first keyed row after k_master_rows */
+				master_rows(st.settings.enabled);
+		} else {
 			*val = 0;
+		}
 		return 0;
 	}
 	return TAI_CONTINUE(int, r_get, cat, name, val);
@@ -321,6 +375,8 @@ static int set_hook(const char *cat, const char *name, int v)
 		int k = name ? key_index(name) : -1;
 		int r = k >= 0 ? tsSetSetting(k, v) : TS_ERR_ARG;
 		TS_LOGI("[SET] %s = %d -> %d", name ? name : "?", v, r);
+		if (k == TS_KEY_ENABLED && r == TS_OK)
+			master_rows(v);
 		return 0;
 	}
 	return TAI_CONTINUE(int, r_set, cat, name, v);
@@ -361,9 +417,18 @@ static SceUID load_hook(const char *path, SceSize args, void *argp,
 		              0xC436F916, 0x58421DD1, info_hook);
 		g_h_text = taiHookFunctionImport(&r_text,"SceSystemSettingsCore",
 		              0x4D9A9DD0, 0x19CEFDA7, text_hook);   /* scePafToplevelGetText */
+		uintptr_t f = 0;
+		if (taiGetModuleExportFunc("SceSystemSettingsCore", TAI_ANY_LIBRARY,
+		                           0xF832D8FB, &f) >= 0)        /* enable a row */
+			g_row_enable = (int (*)(const char *))f;
+		f = 0;
+		if (taiGetModuleExportFunc("SceSystemSettingsCore", TAI_ANY_LIBRARY,
+		                           0x9D058B17, &f) >= 0)        /* grey a row */
+			g_row_grey = (int (*)(const char *))f;
 		TS_LOGI("[SET] core loaded - UI hooks xml=0x%08x get=0x%08x set=0x%08x "
-		        "info=0x%08x text=0x%08x", (unsigned)g_h_xml, (unsigned)g_h_get,
-		        (unsigned)g_h_set, (unsigned)g_h_info, (unsigned)g_h_text);
+		        "info=0x%08x text=0x%08x, row enable/grey %s", (unsigned)g_h_xml,
+		        (unsigned)g_h_get, (unsigned)g_h_set, (unsigned)g_h_info,
+		        (unsigned)g_h_text, g_row_enable && g_row_grey ? "ok" : "missing");
 	}
 	return ret;
 }

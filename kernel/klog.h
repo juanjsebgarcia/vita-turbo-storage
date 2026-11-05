@@ -8,6 +8,10 @@
  * kernel.old.log and a fresh one is started, so an overnight run keeps about
  * twice that much history.
  *
+ * Crash-safe mode (the default from ts_klog_init): the file is closed after
+ * every line, so nothing is lost if the console goes down. main.c turns it off
+ * once the boot is known good; warnings and errors are always written this way.
+ *
  * HOT-PATH RULE: the storage I/O hooks (kernel/stage.c) must NOT call
  * these. They only bump counters; the 1 Hz worker (kernel/main.c) does the
  * logging.
@@ -39,6 +43,7 @@
 
 void ts_klog_init(void);
 void ts_klog_fini(void);
+int  ts_klog_sync(int on);   /* 1: close the file after every line; returns the previous setting */
 
 void ts_klog(int level, const char *fmt, ...);
 

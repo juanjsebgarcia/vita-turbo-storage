@@ -11,7 +11,8 @@
 int  ts_stage_init(void);
 void ts_stage_fini(void);
 
-/* Apply settings (per-device on/off, verify mode). Safe from any context. */
+/* Apply settings (master and per-device on/off, verify mode, "Pause in Vita
+ * games"). Safe from any context. */
 void ts_stage_apply(const TsSettings *s);
 
 /* Called once a second by the worker (allocates the verify buffer on demand). */

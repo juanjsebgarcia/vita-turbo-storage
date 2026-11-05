@@ -2,7 +2,7 @@ storageturbo_kernel:
   attributes: 0
   version:
     major: 0
-    minor: 1
+    minor: 4
   main:
     start: module_start
     stop: module_stop
@@ -11,6 +11,7 @@ storageturbo_kernel:
       syscall: true
       functions:
         - tsGetState
+        - tsGetState2
         - tsSetSetting
         - tsSelfTestPing
         - tsHudRegisterProc

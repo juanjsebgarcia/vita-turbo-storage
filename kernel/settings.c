@@ -10,11 +10,14 @@
  *
  * ts_settings_set() runs in the caller's syscall context, so it only updates
  * memory (and the staging switches) and marks the settings dirty; the 1 Hz
- * worker (main.c) does the file write from its own kernel thread.
+ * worker (main.c) does the file write from its own kernel thread. Changes are
+ * serialised by a mutex: two at once (the quick menu in SceShell and the
+ * Settings app, say) could otherwise apply an older snapshot last.
  */
 #include <psp2kern/kernel/sysclib.h>   /* memcpy/memset                        */
 #include <psp2kern/io/fcntl.h>
 #include <psp2kern/io/stat.h>
+#include <psp2kern/kernel/threadmgr.h>
 
 #include "settings.h"
 #include "klog.h"
@@ -34,10 +37,12 @@ typedef struct TsSettingsFile {
 volatile TsSettings g_ts_settings;
 static volatile int g_dirty = 0;
 static int          g_save_fails = 0;   /* retry a failed save a few times */
+static SceUID       g_set_mtx = -1;     /* serialises ts_settings_set          */
 
 static const int32_t g_defaults[TS_KEY_COUNT] = {
-	TS_DEF_SD2VITA, TS_DEF_INTERNAL, TS_DEF_VERIFY, TS_DEF_HUD, TS_DEF_HUD_POS,
+	TS_DEF_SD2VITA, TS_DEF_RETIRED1, TS_DEF_VERIFY, TS_DEF_HUD, TS_DEF_HUD_POS,
 	TS_DEF_DEVMODE, TS_DEF_MEMCARD, TS_DEF_HUD_GAME, TS_DEF_HUD_RECENT,
+	TS_DEF_ENABLED, TS_DEF_GAME_PAUSE,
 };
 
 static uint32_t file_check(const TsSettingsFile *f)
@@ -48,7 +53,7 @@ static uint32_t file_check(const TsSettingsFile *f)
 	return c;
 }
 
-void ts_settings_init(void)
+void ts_settings_init(int apply)
 {
 	TsSettings s;
 	for (int k = 0; k < TS_KEY_COUNT; k++)
@@ -85,8 +90,16 @@ void ts_settings_init(void)
 		}
 	}
 	memcpy((void *)&g_ts_settings, &s, sizeof(s));
-	TS_KLOGI("settings: sd2vita=%d internal=%d memcard=%d verify=%d hud=%d pos=%d devmode=%d",
-	         s.sd2vita, s.internal, s.memcard, s.verify, s.hud, s.hud_pos, s.devmode);
+	if (!apply) {
+		/* Safe mode or unsupported firmware: the saved values are only shown
+		 * (Settings, quick menu); nothing is applied and nothing can change. */
+		TS_KLOGI("settings: loaded for display only (nothing installed)");
+		return;
+	}
+	g_set_mtx = ksceKernelCreateMutex("SceStorageTurboSet", 0, 0, NULL);
+	TS_KLOGI("settings: enabled=%d sd2vita=%d memcard=%d game_pause=%d verify=%d "
+	         "hud=%d pos=%d devmode=%d", s.enabled, s.sd2vita, s.memcard,
+	         s.game_pause, s.verify, s.hud, s.hud_pos, s.devmode);
 	ts_stage_apply(&s);
 }
 
@@ -97,15 +110,20 @@ int ts_settings_set(int key, int value)
 	int32_t *f = ts_setting_field((TsSettings *)&g_ts_settings, key);
 	if (!f)
 		return TS_ERR_ARG;
+	if (g_set_mtx >= 0)
+		ksceKernelLockMutex(g_set_mtx, 1, NULL);
 	if (*f != value) {
 		TsSettings now;
 
 		*(volatile int32_t *)f = value;
-		g_save_fails = 0;
-		g_dirty = 1;
 		ts_settings_copy(&now);
 		ts_stage_apply(&now);              /* takes effect on the next transfer */
+		g_save_fails = 0;
+		__sync_synchronize();              /* the value is in place before the save */
+		g_dirty = 1;
 	}
+	if (g_set_mtx >= 0)
+		ksceKernelUnlockMutex(g_set_mtx, 1);
 	return TS_OK;
 }
 
@@ -149,6 +167,7 @@ void ts_settings_flush(void)
 		return;
 	}
 	g_save_fails = 0;
-	TS_KLOGI("settings: saved sd2vita=%d internal=%d memcard=%d verify=%d hud=%d pos=%d devmode=%d",
-	         s.sd2vita, s.internal, s.memcard, s.verify, s.hud, s.hud_pos, s.devmode);
+	TS_KLOGI("settings: saved enabled=%d sd2vita=%d memcard=%d game_pause=%d "
+	         "verify=%d hud=%d pos=%d devmode=%d", s.enabled, s.sd2vita,
+	         s.memcard, s.game_pause, s.verify, s.hud, s.hud_pos, s.devmode);
 }

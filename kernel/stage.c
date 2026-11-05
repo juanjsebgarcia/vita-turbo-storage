@@ -15,12 +15,14 @@
  * Hooked exports (SceSdifForDriver), all pass-through unless a transfer
  * qualifies:
  *   ksceSdifReadSectorSd / ksceSdifWriteSectorSd    -> SD2Vita (port 1, SD card)
- *   ksceSdifReadSectorMmc / ksceSdifWriteSectorMmc  -> internal (port 0 only;
- *                                                      game cards stay stock)
  * and (SceMsifForDriver):
  *   ksceMsifReadSector / ksceMsifWriteSector        -> the memory card (one slot)
- * Never touched: small transfers (< 32 KiB: file-system metadata), other ports
- * (the Wi-Fi chip is on its own port and never calls these), USB storage.
+ * Never touched: small transfers (< 32 KiB: file-system metadata), transfers
+ * into or out of non-cacheable memory (the driver does no cache work there, so
+ * the standard path is already the fast one), other ports
+ * (the Wi-Fi chip is on its own port and never calls these), USB storage,
+ * game cards, and the console's built-in storage, which also holds the
+ * system's own partitions (its MMC exports are not hooked at all).
  *
  * Safety rules:
  *   - one staging buffer per device; if it is busy the transfer goes stock;
@@ -28,6 +30,8 @@
  *     call returns, exactly as stock;
  *   - any error on the faster path switches that device back to stock for the
  *     session and finishes the same request the stock way;
+ *   - with "Pause in Vita games" on, nothing takes the faster path while a game
+ *     is in front or for a game's own transfers (fg.c);
  *   - verify mode re-reads every faster transfer the stock way and compares;
  *     on a mismatch the caller gets stock data (reads) or the chunk is
  *     rewritten the stock way (writes), and the device falls back.
@@ -41,12 +45,11 @@
 
 #include "stage.h"
 #include "klog.h"
+#include "fg.h"
 
 #define LIB_SDIF       0x96D306FA    /* SceSdifForDriver                       */
 #define NID_READ_SD    0xB9593652    /* ksceSdifReadSectorSd                   */
 #define NID_WRITE_SD   0xE0781171    /* ksceSdifWriteSectorSd                  */
-#define NID_READ_MMC   0x6F8D529B    /* ksceSdifReadSectorMmc                  */
-#define NID_WRITE_MMC  0x175543D2    /* ksceSdifWriteSectorMmc                 */
 #define LIB_MSIF       0xB706084A    /* SceMsifForDriver                       */
 #define NID_READ_MS    0x58654AA3    /* ksceMsifReadSector(sector, buf, count) */
 #define NID_WRITE_MS   0x329035EF    /* ksceMsifWriteSector                    */
@@ -62,6 +65,7 @@
 #define MEMBLOCK_KERNEL_NC_RW  0x10208006
 
 void *ksceSdifGetSdContextGlobal(int port);
+void ts_boot_mark(const char *stage);   /* main.c: names the bring-up step */
 
 typedef struct Dev {
 	int           port;          /* SDIF port, or -1: the memory card          */
@@ -70,15 +74,19 @@ typedef struct Dev {
 	volatile int  busy;
 	volatile int  enabled;       /* from settings                              */
 	volatile int  fallback;      /* error/mismatch seen: stock for the session */
+	int           hooked;        /* its driver's hooks are in: may stage      */
+	int           alloc_failed;  /* buffer allocation failed: retried when the
+	                              * storage's own switch goes off and on      */
 	uint64_t      rd_bytes, wr_bytes;   /* moved on the faster path            */
 	uint64_t      all_rd, all_wr;       /* every transfer on this device (HUD) */
 	TsDevState    st;            /* counters (status filled in by stage_get)   */
 } Dev;
 
+static int g_stage_ok;   /* hooks installed: buffers may be allocated */
+
 static Dev g_dev[TS_DEV_COUNT] = {
-	[TS_DEV_SD2VITA]  = { .port = 1, .uid = -1 },
-	[TS_DEV_INTERNAL] = { .port = 0, .uid = -1 },
-	[TS_DEV_MEMCARD]  = { .port = -1, .uid = -1 },
+	[TS_DEV_SD2VITA]  = { .port = 1, .uid = -1, .hooked = 1 },
+	[TS_DEV_MEMCARD]  = { .port = -1, .uid = -1, .hooked = 1 },
 };
 
 /* Verify mode: one shared cached buffer for the stock re-read. */
@@ -86,11 +94,24 @@ static volatile int g_verify;
 static void        *g_shadow;
 static SceUID       g_shadow_uid = -1;
 static volatile int g_shadow_busy;
+static volatile int g_shadow_failed;   /* allocation failed: no retry every tick */
 
-enum { H_RD_SD, H_WR_SD, H_RD_MMC, H_WR_MMC, H_RD_MS, H_WR_MS, H_COUNT };
+/* Returned when a hook runs before taiHEN has stored its ref (see ref_of):
+ * a failed transfer (SCE_ERROR_ERRNO_EIO), never a jump through NULL. */
+#define TS_IO_ERROR  ((int)0x80010005)
+
+/* SceSysmemForDriver ksceKernelGetMemBlockMemtypeByAddr: the memory type at an
+ * address of the current address space (0x8000 non-cacheable, CDRAM included;
+ * 0x0800 device), or < 0. Resolved at run time; without it everything counts
+ * as cached, as before. */
+#define MEMTYPE_NC      0x8000
+#define MEMTYPE_DEVICE  0x0800
+static int (*g_memtype_of)(const void *addr);
+
+enum { H_RD_SD, H_WR_SD, H_RD_MS, H_WR_MS, H_COUNT };
 #define H_SDIF_COUNT H_RD_MS          /* the SceSdif hooks come first          */
 static volatile tai_hook_ref_t g_ref[H_COUNT];
-static SceUID g_hook[H_COUNT] = { -1, -1, -1, -1, -1, -1 };
+static SceUID g_hook[H_COUNT] = { -1, -1, -1, -1 };
 
 /* Calling the original: SceSdif takes the card context first, SceMsif has a
  * single slot and no context. `part` is NULL for the memory card. */
@@ -108,7 +129,8 @@ static int io_msif(tai_hook_ref_t ref, void *part, uint32_t sector, void *buf, u
 }
 
 /* taiHEN can make a hook live a moment before it stores the ref. A call that
- * lands in that window waits for it (bounded) instead of sleeping blindly. */
+ * lands in that window waits for it (bounded) instead of sleeping blindly; if
+ * it is still not there, the hook fails the transfer (TS_IO_ERROR). */
 static tai_hook_ref_t ref_of(int h)
 {
 	for (int i = 0; i < 2000 && g_ref[h] == 0; i++)
@@ -123,6 +145,9 @@ static int on_port(void *part, int port)
 	/* A card context's first word is its controller context. */
 	return part && *(void **)part == ksceSdifGetSdContextGlobal(port);
 }
+
+int module_get_export_func(SceUID pid, const char *modname, uint32_t libnid,
+                           uint32_t funcnid, uintptr_t *func);
 
 static int alloc_buf(unsigned type, int phycont, SceUID *uid, void **base)
 {
@@ -143,13 +168,42 @@ static int alloc_buf(unsigned type, int phycont, SceUID *uid, void **base)
 	return TS_OK;
 }
 
+static int is_uncached(const void *a)
+{
+	int m = g_memtype_of(a);
+	return m == MEMTYPE_NC || m == MEMTYPE_DEVICE;
+}
+
+/* Non-cacheable at both ends: anything unknown counts as cached. */
+static int caller_uncached(const void *buf, uint32_t nsec)
+{
+	return g_memtype_of && is_uncached(buf) &&
+	       is_uncached((const uint8_t *)buf + nsec * 512 - 1);
+}
+
 /* Take the device buffer for one request, or 0 if the request stays stock. */
-static int take(Dev *d, int mine, uint32_t nsec)
+static int take(Dev *d, int mine, const void *buf, uint32_t nsec)
 {
 	if (!mine || !d->enabled || d->fallback || !d->buf || nsec < MIN_SECTORS)
 		return 0;
+	if (caller_uncached(buf, nsec)) {
+		d->st.uncached++;
+		return 0;
+	}
+	if (ts_fg_io_hold()) {
+		d->st.held++;
+		return 0;
+	}
 	if (__sync_lock_test_and_set(&d->busy, 1)) {
 		d->st.passthru++;
+		return 0;
+	}
+	/* Again with the buffer held: ts_stage_fini clears `enabled`, then waits
+	 * for `busy` to drop, so a request that passed the check above just before
+	 * must not go on to use the buffer. */
+	__sync_synchronize();
+	if (!d->enabled || d->fallback) {
+		__sync_lock_release(&d->busy);
 		return 0;
 	}
 	return 1;
@@ -169,7 +223,7 @@ static int stage_read(Dev *d, io_fn io, tai_hook_ref_t ref, void *part, uint32_t
 
 	if (mine)
 		d->all_rd += (uint64_t)nsec * 512;
-	if (!take(d, mine, nsec))
+	if (!take(d, mine, buf, nsec))
 		return io(ref, part, sector, buf, nsec);
 	verify = take_shadow();
 	while (left && !d->fallback) {
@@ -214,9 +268,13 @@ static int stage_write(Dev *d, io_fn io, tai_hook_ref_t ref, tai_hook_ref_t rd_r
 
 	if (mine)
 		d->all_wr += (uint64_t)nsec * 512;
-	if (!take(d, mine, nsec))
+	if (!take(d, mine, buf, nsec))
 		return io(ref, part, sector, buf, nsec);
-	verify = take_shadow() && rd_ref;
+	verify = take_shadow();
+	if (verify && !rd_ref) {            /* no read hook yet: cannot verify this one */
+		__sync_lock_release(&g_shadow_busy);
+		verify = 0;
+	}
 	while (left && !d->fallback) {
 		uint32_t n = left > STAGE_SECTORS ? STAGE_SECTORS : left, bytes = n * 512;
 
@@ -254,59 +312,53 @@ static int stage_write(Dev *d, io_fn io, tai_hook_ref_t ref, tai_hook_ref_t rd_r
 
 static int h_rd_sd(void *part, uint32_t sector, void *buf, uint32_t nsec)
 {
-	return stage_read(&g_dev[TS_DEV_SD2VITA], io_sdif, ref_of(H_RD_SD), part, sector, buf, nsec);
+	tai_hook_ref_t r = ref_of(H_RD_SD);
+
+	return r ? stage_read(&g_dev[TS_DEV_SD2VITA], io_sdif, r, part, sector, buf, nsec) : TS_IO_ERROR;
 }
 
 static int h_wr_sd(void *part, uint32_t sector, void *buf, uint32_t nsec)
 {
-	return stage_write(&g_dev[TS_DEV_SD2VITA], io_sdif, ref_of(H_WR_SD), g_ref[H_RD_SD], part,
-	                   sector, buf, nsec);
-}
+	tai_hook_ref_t r = ref_of(H_WR_SD);
 
-static int h_rd_mmc(void *part, uint32_t sector, void *buf, uint32_t nsec)
-{
-	return stage_read(&g_dev[TS_DEV_INTERNAL], io_sdif, ref_of(H_RD_MMC), part, sector, buf, nsec);
-}
-
-static int h_wr_mmc(void *part, uint32_t sector, void *buf, uint32_t nsec)
-{
-	return stage_write(&g_dev[TS_DEV_INTERNAL], io_sdif, ref_of(H_WR_MMC), g_ref[H_RD_MMC], part,
-	                   sector, buf, nsec);
+	return r ? stage_write(&g_dev[TS_DEV_SD2VITA], io_sdif, r, g_ref[H_RD_SD], part,
+	                       sector, buf, nsec) : TS_IO_ERROR;
 }
 
 static int h_rd_ms(uint32_t sector, void *buf, uint32_t nsec)
 {
-	return stage_read(&g_dev[TS_DEV_MEMCARD], io_msif, ref_of(H_RD_MS), NULL, sector, buf, nsec);
+	tai_hook_ref_t r = ref_of(H_RD_MS);
+
+	return r ? stage_read(&g_dev[TS_DEV_MEMCARD], io_msif, r, NULL, sector, buf, nsec) : TS_IO_ERROR;
 }
 
 static int h_wr_ms(uint32_t sector, void *buf, uint32_t nsec)
 {
-	return stage_write(&g_dev[TS_DEV_MEMCARD], io_msif, ref_of(H_WR_MS), g_ref[H_RD_MS], NULL,
-	                   sector, buf, nsec);
+	tai_hook_ref_t r = ref_of(H_WR_MS);
+
+	return r ? stage_write(&g_dev[TS_DEV_MEMCARD], io_msif, r, g_ref[H_RD_MS], NULL,
+	                       sector, buf, nsec) : TS_IO_ERROR;
 }
 
 int ts_stage_init(void)
 {
-	static const struct { int h; uint32_t nid; void *fn; } k_hooks[H_COUNT] = {
-		{ H_RD_SD,  NID_READ_SD,   h_rd_sd  },
-		{ H_WR_SD,  NID_WRITE_SD,  h_wr_sd  },
-		{ H_RD_MMC, NID_READ_MMC,  h_rd_mmc },
-		{ H_WR_MMC, NID_WRITE_MMC, h_wr_mmc },
-		{ H_RD_MS,  NID_READ_MS,   h_rd_ms  },
-		{ H_WR_MS,  NID_WRITE_MS,  h_wr_ms  },
+	static const struct { int h; uint32_t nid; void *fn; const char *name; } k_hooks[H_COUNT] = {
+		{ H_RD_SD,  NID_READ_SD,   h_rd_sd,  "hook sd read"      },
+		{ H_WR_SD,  NID_WRITE_SD,  h_wr_sd,  "hook sd write"     },
+		{ H_RD_MS,  NID_READ_MS,   h_rd_ms,  "hook memcard read" },
+		{ H_WR_MS,  NID_WRITE_MS,  h_wr_ms,  "hook memcard write" },
 	};
 
-	/* Buffers first, at boot while contiguous memory is easy to find. A device
-	 * without one simply stays stock. */
-	for (int i = 0; i < TS_DEV_COUNT; i++) {
-		int r = alloc_buf(MEMBLOCK_KERNEL_NC_RW, 1, &g_dev[i].uid, &g_dev[i].buf);
+	uintptr_t mt = 0;
+	if (module_get_export_func(KERNEL_PID, "SceSysmem", 0x6F25E18A, 0xF3BBE2E1, &mt) >= 0)
+		g_memtype_of = (int (*)(const void *))mt;
+	TS_KLOGI("stage: memory type lookup %s", g_memtype_of ? "ok" :
+	         "missing - non-cacheable buffers are staged too");
 
-		if (r < 0) {
-			g_dev[i].buf = NULL;
-			TS_KLOGW("stage: dev %d staging buffer not allocated (0x%08x) - stock", i,
-			         (unsigned)r);
-		}
-	}
+	/* Staging buffers are not allocated here: the worker allocates one only
+	 * for a storage that is switched on (ts_stage_worker_tick), so a default
+	 * install (every storage off) holds no contiguous memory. */
+	ts_boot_mark("hooks");
 	for (int i = 0; i < H_SDIF_COUNT; i++) {
 		g_hook[k_hooks[i].h] = taiHookFunctionExportForKernel(KERNEL_PID,
 			(tai_hook_ref_t *)&g_ref[k_hooks[i].h], "SceSdif", LIB_SDIF, k_hooks[i].nid,
@@ -332,25 +384,20 @@ int ts_stage_init(void)
 					taiHookReleaseForKernel(g_hook[j], g_ref[j]);
 					g_hook[j] = -1;
 				}
-			Dev *m = &g_dev[TS_DEV_MEMCARD];
-			if (m->uid >= 0) {
-				ksceKernelFreeMemBlock(m->uid);
-				m->uid = -1;
-			}
-			m->buf = NULL;
+			g_dev[TS_DEV_MEMCARD].hooked = 0;   /* never gets a buffer */
 			break;
 		}
 	}
-	TS_KLOGI("stage: hooks installed; buffers sd2vita=%s internal=%s memcard=%s",
-	         g_dev[TS_DEV_SD2VITA].buf ? "ok" : "none",
-	         g_dev[TS_DEV_INTERNAL].buf ? "ok" : "none",
-	         g_dev[TS_DEV_MEMCARD].buf ? "ok" : "none");
+	g_stage_ok = 1;
+	TS_KLOGI("stage: hooks installed (memory card %s); buffers as storages are switched on",
+	         g_dev[TS_DEV_MEMCARD].hooked ? "too" : "not hooked");
 	return TS_OK;
 }
 
 void ts_stage_fini(void)
 {
 	/* Stop taking the faster path, then wait for any transfer in flight. */
+	g_stage_ok = 0;   /* no new buffers */
 	for (int i = 0; i < TS_DEV_COUNT; i++)
 		g_dev[i].enabled = 0;
 	for (int i = 0; i < TS_DEV_COUNT; i++)
@@ -374,27 +421,72 @@ void ts_stage_fini(void)
 	}
 }
 
+/* Allocate i's staging buffer if it has none (worker only, so it can't race
+ * ts_stage_fini: module_stop joins the worker first). Only ever NULL -> buffer
+ * while the module runs, so a transfer that saw a buffer keeps a valid one.
+ * The uid is in place before the buffer is. */
+static void ensure_buf(int i)
+{
+	Dev *d = &g_dev[i];
+	SceUID uid;
+	void *base;
+
+	if (d->buf || d->alloc_failed || !d->hooked || !g_stage_ok)
+		return;
+	int r = alloc_buf(MEMBLOCK_KERNEL_NC_RW, 1, &uid, &base);
+	if (r < 0) {
+		d->alloc_failed = 1;
+		TS_KLOGW("stage: dev %d staging buffer not allocated (0x%08x) - stock; "
+		         "switch it off and on to retry", i, (unsigned)r);
+		return;
+	}
+	d->uid = uid;
+	__sync_synchronize();
+	d->buf = base;
+	TS_KLOGI("stage: dev %d staging buffer %u KiB at %p", i,
+	         (unsigned)(STAGE_BYTES >> 10), base);
+}
+
 void ts_stage_apply(const TsSettings *s)
 {
-	const int32_t want[TS_DEV_COUNT] = { s->sd2vita, s->internal, s->memcard };
+	static int32_t own_prev[TS_DEV_COUNT];   /* the storage's own switch, last apply */
+	const int32_t own[TS_DEV_COUNT] = { s->sd2vita, s->memcard };
 
 	for (int i = 0; i < TS_DEV_COUNT; i++) {
-		if (want[i] && !g_dev[i].enabled)
-			g_dev[i].fallback = 0;   /* switching it back on is a fresh start */
-		g_dev[i].enabled = want[i] ? 1 : 0;
+		/* Switching the storage's own row back on is a fresh start; the master
+		 * switch (also in the quick menu) is not, so it can't re-arm a storage
+		 * that fell back after an error or a mismatch. */
+		if (own[i] && !own_prev[i]) {
+			g_dev[i].fallback = 0;
+			g_dev[i].alloc_failed = 0;
+		}
+		own_prev[i] = own[i] ? 1 : 0;
+		g_dev[i].enabled = s->enabled && own[i] ? 1 : 0;
 	}
 	g_verify = s->verify ? 1 : 0;
+	if (!g_verify)
+		g_shadow_failed = 0;      /* turning verify off and on again retries the buffer */
+	ts_fg_enable(s->game_pause);
 }
 
 void ts_stage_worker_tick(void)
 {
+	/* Staging buffers: allocated here, in the worker (a kernel thread), never
+	 * in the thread of the process that changed a setting, for a storage that
+	 * is on and has none. Until then its transfers stay stock (take() checks
+	 * the buffer). At boot that is the first tick, about 1 s after start. */
+	for (int i = 0; i < TS_DEV_COUNT; i++)
+		if (g_dev[i].enabled)
+			ensure_buf(i);
+
 	/* The verify buffer is only allocated once verify mode is first turned on. */
-	if (g_verify && !g_shadow && g_shadow_uid < 0) {
+	if (g_verify && !g_shadow && g_shadow_uid < 0 && !g_shadow_failed) {
 		int r = alloc_buf(SCE_KERNEL_MEMBLOCK_TYPE_KERNEL_RW, 0, &g_shadow_uid, &g_shadow);
 
 		if (r < 0) {
 			g_shadow = NULL;
-			g_shadow_uid = -2;      /* do not retry every second */
+			g_shadow_uid = -1;
+			g_shadow_failed = 1;    /* do not retry every second */
 			TS_KLOGW("stage: verify buffer not allocated (0x%08x)", (unsigned)r);
 		} else {
 			TS_KLOGI("stage: verify buffer allocated");
@@ -415,6 +507,8 @@ int ts_stage_verify_ready(void)
 
 void ts_stage_get(TsDevState out[TS_DEV_COUNT], int plugin_active)
 {
+	int paused = ts_fg_paused();
+
 	for (int i = 0; i < TS_DEV_COUNT; i++) {
 		const Dev *d = &g_dev[i];
 
@@ -424,15 +518,14 @@ void ts_stage_get(TsDevState out[TS_DEV_COUNT], int plugin_active)
 		out[i].status = !plugin_active ? TS_ST_UNAVAIL :
 		                !d->enabled    ? TS_ST_OFF :
 		                !d->buf        ? TS_ST_NO_BUFFER :
-		                d->fallback    ? TS_ST_FALLBACK : TS_ST_ACTIVE;
+		                d->fallback    ? TS_ST_FALLBACK :
+		                paused         ? TS_ST_PAUSED : TS_ST_ACTIVE;
 	}
 }
 
 /* Memory card slow mode (Sony's own throttle: it sleeps after every memory
  * card transfer). Read only; Turbo Storage never changes it. 1 on, 0 off,
  * -1 if the driver's getter isn't available. */
-int module_get_export_func(SceUID pid, const char *modname, uint32_t libnid,
-                           uint32_t funcnid, uintptr_t *func);
 
 int ts_stage_memcard_slow(void)
 {

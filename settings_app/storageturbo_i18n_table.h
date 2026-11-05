@@ -44,28 +44,6 @@
 	"Faster SD2Vita",   /* engb */
 	"Daha hızlı SD2Vita",   /* tr */
 },
-[TS_I18N_ROW_INTERNAL] = {
-	"本体ストレージを高速化",   /* ja */
-	"Faster internal storage",   /* en */
-	"Stockage interne plus rapide",   /* fr */
-	"Almacenamiento interno más rápido",   /* es */
-	"Schnellerer interner Speicher",   /* de */
-	"Memoria interna più veloce",   /* it */
-	"Snellere interne opslag",   /* nl */
-	"Armazenamento interno mais rápido",   /* pt */
-	"Ускорить встроенную память",   /* ru */
-	"내장 저장소 가속",   /* ko */
-	"加速內建儲存空間",   /* zht */
-	"加速内置存储",   /* zhs */
-	"Nopeampi sisäinen tallennustila",   /* fi */
-	"Snabbare intern lagring",   /* sv */
-	"Hurtigere intern lagring",   /* da */
-	"Raskere intern lagring",   /* no */
-	"Szybsza pamięć wewnętrzna",   /* pl */
-	"Armazenamento interno mais rápido",   /* ptbr */
-	"Faster internal storage",   /* engb */
-	"Daha hızlı dahili depolama",   /* tr */
-},
 [TS_I18N_ROW_HUD] = {
 	"ストレージHUD",   /* ja */
 	"Storage HUD",   /* en */
@@ -219,28 +197,6 @@
 	"Acelera a leitura e a gravação de um cartão microSD em um adaptador SD2Vita. Seus arquivos e a forma como são salvos não mudam. Desligue se suspeitar de um problema. Tem efeito imediato; não precisa reiniciar.",   /* ptbr */
 	"Speeds up reading and writing a microSD card in an SD2Vita adapter. Your files and how they are stored do not change. Turn off if you suspect a problem. Takes effect immediately; no reboot needed.",   /* engb */
 	"SD2Vita adaptöründeki microSD kartın okuma ve yazma hızını artırır. Dosyalarınız ve saklanma biçimleri değişmez. Bir sorundan şüphelenirseniz kapatın. Hemen etkili olur; yeniden başlatma gerekmez.",   /* tr */
-},
-[TS_I18N_HINT_INTERNAL] = {
-	"本体内蔵ストレージの読み書きを高速化します。このストレージにはシステムデータやプラグインの設定も保存されているため、念のため初期設定はオフです。念のため、ファームウェアのアップデートやダウングレードの前にはオフにしてください。すぐに反映され、再起動は不要です。",   /* ja */
-	"Speeds up reading and writing the console's built-in storage. Off by default as a precaution, because this storage also holds system data and plugin settings. As an extra precaution, turn it off before updating or downgrading the firmware. Takes effect immediately; no reboot needed.",   /* en */
-	"Accélère la lecture et l'écriture du stockage intégré de la console. Désactivé par défaut par précaution, car ce stockage contient aussi des données système et les réglages des plugins. Par précaution supplémentaire, désactivez-le avant de mettre à jour ou de rétrograder le firmware. Prend effet immédiatement, sans redémarrage.",   /* fr */
-	"Acelera la lectura y escritura del almacenamiento integrado de la consola. Desactivado por defecto como precaución, porque este almacenamiento también guarda datos del sistema y la configuración de los plugins. Como precaución adicional, desactívalo antes de actualizar o volver a una versión anterior del firmware. Se aplica al instante; no hace falta reiniciar.",   /* es */
-	"Beschleunigt Lesen und Schreiben des eingebauten Speichers der Konsole. Vorsichtshalber standardmäßig aus, da dieser Speicher auch Systemdaten und Plugin-Einstellungen enthält. Schalte es zur zusätzlichen Sicherheit aus, bevor du die Firmware aktualisierst oder downgradest. Wirkt sofort, ohne Neustart.",   /* de */
-	"Velocizza la lettura e la scrittura della memoria integrata della console. Disattivato per impostazione predefinita per precauzione, perché questa memoria contiene anche dati di sistema e impostazioni dei plugin. Come ulteriore precauzione, disattivalo prima di aggiornare o fare il downgrade del firmware. Ha effetto subito, senza riavviare.",   /* it */
-	"Versnelt het lezen en schrijven van de ingebouwde opslag van de console. Standaard uit uit voorzorg, omdat deze opslag ook systeemgegevens en plugininstellingen bevat. Zet het voor de zekerheid uit voordat je de firmware bijwerkt of downgradet. Werkt meteen; opnieuw opstarten is niet nodig.",   /* nl */
-	"Acelera a leitura e a escrita do armazenamento integrado da consola. Desligado por predefinição por precaução, porque este armazenamento também guarda dados do sistema e definições de plugins. Como precaução adicional, desligue-o antes de atualizar ou reverter o firmware. Tem efeito imediato; não é preciso reiniciar.",   /* pt */
-	"Ускоряет чтение и запись встроенной памяти консоли. По умолчанию выключено из предосторожности: в этой памяти также хранятся системные данные и настройки плагинов. В качестве дополнительной меры предосторожности выключайте его перед обновлением или понижением версии прошивки. Действует сразу, перезагрузка не нужна.",   /* ru */
-	"본체 내장 저장소의 읽기와 쓰기를 빠르게 합니다. 이 저장소에는 시스템 데이터와 플러그인 설정도 있으므로 만일을 위해 기본값은 꺼짐입니다. 추가 예방 조치로, 펌웨어를 업데이트하거나 다운그레이드하기 전에 끄세요. 즉시 적용되며 재시작할 필요가 없습니다.",   /* ko */
-	"加快主機內建儲存空間的讀寫速度。由於此儲存空間也存放系統資料與外掛程式設定，為求謹慎，預設為關閉。為求更加謹慎，更新或降級韌體前請先關閉。立即生效，無需重新啟動。",   /* zht */
-	"加快主机内置存储的读写速度。由于该存储还保存系统数据和插件设置，为谨慎起见，默认关闭。为进一步谨慎起见，更新或降级固件前请先关闭。立即生效，无需重启。",   /* zhs */
-	"Nopeuttaa konsolin sisäisen tallennustilan lukemista ja kirjoittamista. Oletuksena pois päältä varotoimena, koska tässä tallennustilassa on myös järjestelmän tietoja ja liitännäisten asetuksia. Lisävarotoimena kytke se pois ennen laiteohjelmiston päivittämistä tai alentamista. Tulee voimaan heti; uudelleenkäynnistystä ei tarvita.",   /* fi */
-	"Snabbar upp läsning och skrivning på konsolens inbyggda lagring. Av som standard av försiktighetsskäl, eftersom lagringen även innehåller systemdata och plugininställningar. Som en extra försiktighetsåtgärd, stäng av det innan du uppdaterar eller nedgraderar firmwaren. Gäller direkt; ingen omstart behövs.",   /* sv */
-	"Gør læsning og skrivning på konsollens indbyggede lager hurtigere. Slået fra som standard af forsigtighed, fordi lageret også rummer systemdata og plugin-indstillinger. Som en ekstra forholdsregel skal du slå det fra, før du opdaterer eller nedgraderer firmwaren. Træder i kraft med det samme; ingen genstart nødvendig.",   /* da */
-	"Gjør lesing og skriving på konsollens innebygde lagring raskere. Av som standard av forsiktighet, fordi lagringen også inneholder systemdata og plugininnstillinger. Som et ekstra forholdsregel bør du slå det av før du oppdaterer eller nedgraderer fastvaren. Trer i kraft umiddelbart; ingen omstart nødvendig.",   /* no */
-	"Przyspiesza odczyt i zapis wbudowanej pamięci konsoli. Domyślnie wyłączone dla bezpieczeństwa, ponieważ ta pamięć przechowuje też dane systemowe i ustawienia wtyczek. Dla dodatkowego bezpieczeństwa wyłącz je przed aktualizacją lub obniżeniem wersji oprogramowania. Działa od razu, bez ponownego uruchamiania.",   /* pl */
-	"Acelera a leitura e a gravação do armazenamento integrado do console. Desligado por padrão por precaução, porque esse armazenamento também guarda dados do sistema e configurações de plugins. Como precaução extra, desligue antes de atualizar ou fazer downgrade do firmware. Tem efeito imediato; não precisa reiniciar.",   /* ptbr */
-	"Speeds up reading and writing the console's built-in storage. Off by default as a precaution, because this storage also holds system data and plugin settings. As an extra precaution, turn it off before updating or downgrading the firmware. Takes effect immediately; no reboot needed.",   /* engb */
-	"Konsolun dahili depolamasının okuma ve yazma hızını artırır. Bu depolama sistem verilerini ve eklenti ayarlarını da tuttuğu için önlem olarak varsayılan olarak kapalıdır. Ek bir önlem olarak, yazılımı güncellemeden veya eski sürüme düşürmeden önce kapatın. Hemen etkili olur; yeniden başlatma gerekmez.",   /* tr */
 },
 [TS_I18N_HINT_HUD] = {
 	"すべてのアプリ上にストレージの速度をリアルタイム表示します。コンパクト：使用中のストレージごとに1行。拡張：合計とエラーも表示。",   /* ja */
@@ -551,26 +507,26 @@
 	"Bir hatadan sonra standarda dönüldü. Yeniden denemek için kapatıp açın; lütfen bildirin.",   /* tr */
 },
 [TS_I18N_ST_NO_BUFFER] = {
-	"利用不可：起動時のメモリ不足。通常の速度。",   /* ja */
-	"Unavailable: not enough memory at boot. Standard speed.",   /* en */
-	"Indisponible : mémoire insuffisante au démarrage. Vitesse standard.",   /* fr */
-	"No disponible: memoria insuficiente al arrancar. Velocidad estándar.",   /* es */
-	"Nicht verfügbar: zu wenig Speicher beim Start. Normale Geschwindigkeit.",   /* de */
-	"Non disponibile: memoria insufficiente all'avvio. Velocità standard.",   /* it */
-	"Niet beschikbaar: te weinig geheugen bij het opstarten. Standaardsnelheid.",   /* nl */
-	"Indisponível: memória insuficiente no arranque. Velocidade padrão.",   /* pt */
-	"Недоступно: не хватило памяти при запуске. Обычная скорость.",   /* ru */
-	"사용 불가: 부팅 시 메모리 부족. 일반 속도.",   /* ko */
-	"無法使用：開機時記憶體不足。標準速度。",   /* zht */
-	"不可用：启动时内存不足。标准速度。",   /* zhs */
-	"Ei käytettävissä: muisti ei riittänyt käynnistyksessä. Tavallinen nopeus.",   /* fi */
-	"Ej tillgängligt: för lite minne vid start. Normal hastighet.",   /* sv */
-	"Utilgængelig: for lidt hukommelse ved opstart. Normal hastighed.",   /* da */
-	"Utilgjengelig: for lite minne ved oppstart. Normal hastighet.",   /* no */
-	"Niedostępne: za mało pamięci przy uruchomieniu. Standardowa prędkość.",   /* pl */
-	"Indisponível: memória insuficiente na inicialização. Velocidade padrão.",   /* ptbr */
-	"Unavailable: not enough memory at boot. Standard speed.",   /* engb */
-	"Kullanılamıyor: açılışta bellek yetersiz. Standart hız.",   /* tr */
+	"利用不可：メモリ不足。通常の速度。オフにしてからオンにすると再試行します。",   /* ja */
+	"Unavailable: not enough memory. Standard speed. Turn off and on to retry.",   /* en */
+	"Indisponible : mémoire insuffisante. Vitesse standard. Désactivez puis réactivez pour réessayer.",   /* fr */
+	"No disponible: memoria insuficiente. Velocidad estándar. Desactívalo y actívalo para reintentar.",   /* es */
+	"Nicht verfügbar: zu wenig Speicher. Normale Geschwindigkeit. Aus- und wieder einschalten zum erneuten Versuch.",   /* de */
+	"Non disponibile: memoria insufficiente. Velocità standard. Disattiva e riattiva per riprovare.",   /* it */
+	"Niet beschikbaar: te weinig geheugen. Standaardsnelheid. Zet uit en weer aan om opnieuw te proberen.",   /* nl */
+	"Indisponível: memória insuficiente. Velocidade padrão. Desligue e ligue para tentar de novo.",   /* pt */
+	"Недоступно: не хватает памяти. Обычная скорость. Выключите и включите, чтобы повторить.",   /* ru */
+	"사용 불가: 메모리 부족. 일반 속도. 껐다 켜면 다시 시도합니다.",   /* ko */
+	"無法使用：記憶體不足。標準速度。關閉再開啟即可重試。",   /* zht */
+	"不可用：内存不足。标准速度。关闭再开启即可重试。",   /* zhs */
+	"Ei käytettävissä: muisti ei riitä. Tavallinen nopeus. Kytke pois ja takaisin yrittääksesi uudelleen.",   /* fi */
+	"Ej tillgängligt: för lite minne. Normal hastighet. Slå av och på för att försöka igen.",   /* sv */
+	"Utilgængelig: for lidt hukommelse. Normal hastighed. Slå fra og til for at prøve igen.",   /* da */
+	"Utilgjengelig: for lite minne. Normal hastighet. Slå av og på for å prøve igjen.",   /* no */
+	"Niedostępne: za mało pamięci. Standardowa prędkość. Wyłącz i włącz, aby spróbować ponownie.",   /* pl */
+	"Indisponível: memória insuficiente. Velocidade padrão. Desligue e ligue para tentar de novo.",   /* ptbr */
+	"Unavailable: not enough memory. Standard speed. Turn off and on to retry.",   /* engb */
+	"Kullanılamıyor: bellek yetersiz. Standart hız. Yeniden denemek için kapatıp açın.",   /* tr */
 },
 [TS_I18N_ST_FIRMWARE] = {
 	"無効：このファームウェアには対応していません。通常の速度。",   /* ja */
@@ -747,4 +703,114 @@
 	"Modo de segurança desativado. Reinicie o Vita para ativar o Turbo Storage de novo.",   /* ptbr */
 	"Safe mode left. Restart the Vita to turn Turbo Storage back on.",   /* engb */
 	"Güvenli moddan çıkıldı. Turbo Storage'ı tekrar açmak için Vita'yı yeniden başlatın.",   /* tr */
+},
+[TS_I18N_ROW_ENABLED] = {
+	"Turbo Storageを有効にする",   /* ja */
+	"Enable Turbo Storage",   /* en */
+	"Activer Turbo Storage",   /* fr */
+	"Activar Turbo Storage",   /* es */
+	"Turbo Storage aktivieren",   /* de */
+	"Attiva Turbo Storage",   /* it */
+	"Turbo Storage inschakelen",   /* nl */
+	"Ativar o Turbo Storage",   /* pt */
+	"Включить Turbo Storage",   /* ru */
+	"Turbo Storage 사용",   /* ko */
+	"啟用 Turbo Storage",   /* zht */
+	"启用 Turbo Storage",   /* zhs */
+	"Ota Turbo Storage käyttöön",   /* fi */
+	"Aktivera Turbo Storage",   /* sv */
+	"Aktivér Turbo Storage",   /* da */
+	"Aktiver Turbo Storage",   /* no */
+	"Włącz Turbo Storage",   /* pl */
+	"Ativar o Turbo Storage",   /* ptbr */
+	"Enable Turbo Storage",   /* engb */
+	"Turbo Storage'ı etkinleştir",   /* tr */
+},
+[TS_I18N_HINT_ENABLED] = {
+	"すべてのストレージのメインスイッチです。オフにすると、下の設定に関係なくすべてのストレージが標準速度で動作し、下の設定はオンに戻すときのために保持されます。オプションのクイックメニュープラグインを入れると、クイックメニュー（PSボタン）からも切り替えられます。すぐに反映されます。",   /* ja */
+	"Main switch for every storage. When off, all storage runs at standard speed, whatever the rows below say, and those choices are kept for when you turn it back on. Also in the quick menu (press the PS button) with the optional quick menu plugin. Takes effect immediately.",   /* en */
+	"Interrupteur principal pour tous les stockages. Désactivé, tous les stockages fonctionnent à vitesse standard, quels que soient les réglages ci-dessous, qui sont conservés pour la réactivation. Aussi dans le menu rapide (touche PS) avec le plugin optionnel de menu rapide. Prend effet immédiatement.",   /* fr */
+	"Interruptor principal para todo el almacenamiento. Desactivado, todo el almacenamiento funciona a velocidad estándar, digan lo que digan las opciones de abajo, que se conservan para cuando lo vuelvas a activar. También en el menú rápido (botón PS) con el plugin opcional de menú rápido. Se aplica al instante.",   /* es */
+	"Hauptschalter für alle Speicher. Aus: Alle Speicher laufen mit normaler Geschwindigkeit, egal was unten eingestellt ist; diese Einstellungen bleiben für das Wiedereinschalten erhalten. Mit dem optionalen Schnellmenü-Plugin auch im Schnellmenü (PS-Taste). Wirkt sofort.",   /* de */
+	"Interruttore principale per tutte le memorie. Se disattivato, tutte le memorie funzionano a velocità standard, qualunque sia l'impostazione qui sotto, che viene conservata per quando lo riattivi. Anche nel menu rapido (tasto PS) con il plugin opzionale del menu rapido. Ha effetto subito.",   /* it */
+	"Hoofdschakelaar voor alle opslag. Uit: alle opslag werkt op standaardsnelheid, wat de opties hieronder ook zeggen; die keuzes blijven bewaard voor als je hem weer aanzet. Ook in het snelmenu (PS-knop) met de optionele snelmenu-plugin. Werkt meteen.",   /* nl */
+	"Interruptor principal para todo o armazenamento. Desligado, todo o armazenamento funciona à velocidade padrão, seja qual for a opção abaixo, que fica guardada para quando o voltar a ligar. Também no menu rápido (botão PS) com o plugin opcional de menu rápido. Tem efeito imediato.",   /* pt */
+	"Главный переключатель для всей памяти. Когда выключен, вся память работает на обычной скорости, независимо от настроек ниже; они сохраняются до повторного включения. Также в быстром меню (кнопка PS) с дополнительным плагином быстрого меню. Действует сразу.",   /* ru */
+	"모든 저장소의 기본 스위치입니다. 끄면 아래 설정과 관계없이 모든 저장소가 표준 속도로 동작하며, 아래 설정은 다시 켤 때를 위해 유지됩니다. 선택 사항인 퀵 메뉴 플러그인을 설치하면 퀵 메뉴(PS 버튼)에서도 전환할 수 있습니다. 즉시 적용됩니다.",   /* ko */
+	"所有儲存空間的總開關。關閉時，無論下方設定為何，所有儲存空間都以標準速度運作；下方的選擇會保留，待重新開啟時使用。安裝選用的快速選單外掛後，也可在快速選單（PS 按鈕）中切換。立即生效。",   /* zht */
+	"所有存储的总开关。关闭时，无论下方设置如何，所有存储都以标准速度运行；下方的选择会保留，待重新开启时使用。安装可选的快捷菜单插件后，也可在快捷菜单（PS 按钮）中切换。立即生效。",   /* zhs */
+	"Kaikkien tallennustilojen pääkytkin. Pois päältä kaikki tallennustilat toimivat normaalinopeudella alla olevista valinnoista riippumatta; valinnat säilyvät, kun kytket sen takaisin. Myös pikavalikossa (PS-painike) valinnaisella pikavalikkolaajennuksella. Tulee voimaan heti.",   /* fi */
+	"Huvudbrytare för all lagring. Av: all lagring körs i standardhastighet oavsett inställningarna nedan, som sparas tills du slår på den igen. Även i snabbmenyn (PS-knappen) med det valfria snabbmenytillägget. Gäller direkt.",   /* sv */
+	"Hovedkontakt for alt lager. Fra: alt lager kører med standardhastighed uanset indstillingerne nedenfor, som gemmes til du slår det til igen. Også i hurtigmenuen (PS-knappen) med det valgfrie hurtigmenu-plugin. Træder i kraft med det samme.",   /* da */
+	"Hovedbryter for all lagring. Av: all lagring kjører med standardhastighet uansett innstillingene nedenfor, som tas vare på til du slår den på igjen. Også i hurtigmenyen (PS-knappen) med det valgfrie hurtigmeny-tillegget. Gjelder med en gang.",   /* no */
+	"Główny przełącznik dla całej pamięci. Wyłączony: cała pamięć działa ze standardową szybkością bez względu na ustawienia poniżej, które zostają zachowane na czas ponownego włączenia. Także w szybkim menu (przycisk PS) z opcjonalną wtyczką szybkiego menu. Działa od razu.",   /* pl */
+	"Interruptor principal para todo o armazenamento. Desligado, todo o armazenamento funciona na velocidade padrão, não importa o que digam as opções abaixo, que ficam guardadas para quando você ligar de novo. Também no menu rápido (botão PS) com o plugin opcional de menu rápido. Tem efeito imediato.",   /* ptbr */
+	"Main switch for every storage. When off, all storage runs at standard speed, whatever the rows below say, and those choices are kept for when you turn it back on. Also in the quick menu (press the PS button) with the optional quick menu plugin. Takes effect immediately.",   /* engb */
+	"Tüm depolamalar için ana anahtar. Kapalıyken, aşağıdaki ayarlar ne olursa olsun tüm depolama standart hızda çalışır; bu seçimler yeniden açtığınızda kullanılmak üzere saklanır. İsteğe bağlı hızlı menü eklentisiyle hızlı menüde (PS tuşu) de bulunur. Hemen etkili olur.",   /* tr */
+},
+[TS_I18N_ROW_GAME_PAUSE] = {
+	"Vitaゲーム中は一時停止",   /* ja */
+	"Pause in Vita games",   /* en */
+	"Pause dans les jeux Vita",   /* fr */
+	"Pausa en juegos de Vita",   /* es */
+	"In Vita-Spielen pausieren",   /* de */
+	"Pausa nei giochi Vita",   /* it */
+	"Pauzeren in Vita-games",   /* nl */
+	"Pausar em jogos Vita",   /* pt */
+	"Пауза в играх Vita",   /* ru */
+	"Vita 게임 중 일시 정지",   /* ko */
+	"Vita 遊戲中暫停",   /* zht */
+	"Vita 游戏中暂停",   /* zhs */
+	"Tauko Vita-peleissä",   /* fi */
+	"Pausa i Vita-spel",   /* sv */
+	"Pause i Vita-spil",   /* da */
+	"Pause i Vita-spill",   /* no */
+	"Wstrzymaj w grach Vita",   /* pl */
+	"Pausar em jogos de Vita",   /* ptbr */
+	"Pause in Vita games",   /* engb */
+	"Vita oyunlarında duraklat",   /* tr */
+},
+[TS_I18N_HINT_GAME_PAUSE] = {
+	"PS VitaゲームやPSPゲームが前面にある間は、ストレージを標準速度で動作させます。ホーム画面、設定、PlayStation Store、ファイルマネージャーなどの自作アプリでは高速化が続きます。推奨：ゲームは読み込んだデータをすぐにグラフィックスチップに渡すため、高速化の実績が最も少ないケースです。",   /* ja */
+	"While a PS Vita game or a PSP game is in front, storage runs at standard speed. The faster path carries on in the Home screen, Settings, the PlayStation Store and homebrew apps such as file managers. Recommended: games hand freshly loaded data straight to the graphics chip, the case the faster path is least proven in.",   /* en */
+	"Pendant qu'un jeu PS Vita ou PSP est au premier plan, le stockage fonctionne à vitesse standard. L'accélération continue sur l'écran d'accueil, dans Paramètres, le PlayStation Store et les applications homebrew comme les gestionnaires de fichiers. Recommandé : les jeux transmettent les données chargées directement à la puce graphique, le cas le moins éprouvé pour l'accélération.",   /* fr */
+	"Mientras un juego de PS Vita o de PSP está en primer plano, el almacenamiento funciona a velocidad estándar. La aceleración sigue en la pantalla de inicio, Ajustes, PlayStation Store y aplicaciones homebrew como los gestores de archivos. Recomendado: los juegos pasan los datos recién cargados directamente al chip gráfico, el caso menos probado de la aceleración.",   /* es */
+	"Solange ein PS Vita- oder PSP-Spiel im Vordergrund ist, läuft der Speicher mit normaler Geschwindigkeit. Auf dem Startbildschirm, in den Einstellungen, im PlayStation Store und in Homebrew-Apps wie Dateimanagern bleibt die Beschleunigung aktiv. Empfohlen: Spiele geben frisch geladene Daten direkt an den Grafikchip weiter – der am wenigsten erprobte Fall für die Beschleunigung.",   /* de */
+	"Mentre un gioco PS Vita o PSP è in primo piano, la memoria funziona a velocità standard. L'accelerazione continua nella schermata Home, in Impostazioni, nel PlayStation Store e nelle app homebrew come i file manager. Consigliato: i giochi passano i dati appena caricati direttamente al chip grafico, il caso meno collaudato per l'accelerazione.",   /* it */
+	"Zolang een PS Vita- of PSP-game op de voorgrond staat, werkt de opslag op standaardsnelheid. De versnelling blijft actief op het startscherm, in Instellingen, de PlayStation Store en homebrew-apps zoals bestandsbeheerders. Aanbevolen: games geven net geladen gegevens direct door aan de grafische chip, het minst beproefde geval voor de versnelling.",   /* nl */
+	"Enquanto um jogo PS Vita ou PSP estiver em primeiro plano, o armazenamento funciona à velocidade padrão. A aceleração continua no ecrã inicial, nas Definições, na PlayStation Store e em aplicações homebrew como gestores de ficheiros. Recomendado: os jogos passam os dados acabados de carregar diretamente ao chip gráfico, o caso menos testado da aceleração.",   /* pt */
+	"Пока на экране игра PS Vita или PSP, память работает на обычной скорости. Ускорение продолжает работать на главном экране, в настройках, в PlayStation Store и в homebrew-приложениях, например файловых менеджерах. Рекомендуется: игры сразу передают загруженные данные графическому чипу — это наименее проверенный случай для ускорения.",   /* ru */
+	"PS Vita 게임이나 PSP 게임이 실행 중인 동안에는 저장소가 표준 속도로 동작합니다. 홈 화면, 설정, PlayStation Store, 파일 관리자 같은 홈브루 앱에서는 가속이 계속됩니다. 권장: 게임은 방금 읽은 데이터를 바로 그래픽 칩에 넘기며, 이는 가속이 가장 덜 검증된 경우입니다.",   /* ko */
+	"當 PS Vita 遊戲或 PSP 遊戲位於前景時，儲存空間以標準速度運作。在主畫面、設定、PlayStation Store 及檔案管理器等自製應用程式中，加速會繼續。建議開啟：遊戲會將剛讀取的資料直接交給圖形晶片，這是加速最少經過驗證的情況。",   /* zht */
+	"当 PS Vita 游戏或 PSP 游戏位于前台时，存储以标准速度运行。在主屏幕、设置、PlayStation Store 以及文件管理器等自制应用中，加速会继续。建议开启：游戏会把刚读取的数据直接交给图形芯片，这是加速最少经过验证的情况。",   /* zhs */
+	"Kun PS Vita- tai PSP-peli on etualalla, tallennustila toimii normaalinopeudella. Nopeutus jatkuu aloitusnäytössä, asetuksissa, PlayStation Storessa ja homebrew-sovelluksissa, kuten tiedostonhallinnoissa. Suositeltu: pelit antavat juuri ladatut tiedot suoraan grafiikkapiirille, mikä on nopeutukselle vähiten testattu tapaus.",   /* fi */
+	"Medan ett PS Vita- eller PSP-spel ligger i förgrunden körs lagringen i standardhastighet. Snabbare lagring fortsätter på startskärmen, i Inställningar, PlayStation Store och homebrew-appar som filhanterare. Rekommenderas: spel lämnar nyss inläst data direkt till grafikchippet, det fall som är minst beprövat för snabbare lagring.",   /* sv */
+	"Mens et PS Vita- eller PSP-spil er i forgrunden, kører lageret med standardhastighed. Hurtigere lager fortsætter på startskærmen, i Indstillinger, PlayStation Store og homebrew-apps som filhåndteringer. Anbefales: spil giver nyindlæste data direkte videre til grafikchippen, det tilfælde hurtigere lager er mindst afprøvet i.",   /* da */
+	"Mens et PS Vita- eller PSP-spill er i forgrunnen, kjører lagringen med standardhastighet. Raskere lagring fortsetter på startskjermen, i Innstillinger, PlayStation Store og homebrew-apper som filbehandlere. Anbefales: spill gir nylig innlastede data rett til grafikkbrikken, det tilfellet raskere lagring er minst utprøvd i.",   /* no */
+	"Gdy na pierwszym planie jest gra na PS Vita lub PSP, pamięć działa ze standardową szybkością. Przyspieszenie działa dalej na ekranie głównym, w Ustawieniach, w PlayStation Store i w aplikacjach homebrew, takich jak menedżery plików. Zalecane: gry przekazują świeżo wczytane dane prosto do układu graficznego, czyli w przypadku najsłabiej sprawdzonym dla przyspieszenia.",   /* pl */
+	"Enquanto um jogo de PS Vita ou PSP estiver em primeiro plano, o armazenamento funciona na velocidade padrão. A aceleração continua na tela inicial, nas Configurações, na PlayStation Store e em apps homebrew como gerenciadores de arquivos. Recomendado: os jogos passam os dados recém-carregados direto para o chip gráfico, o caso menos testado da aceleração.",   /* ptbr */
+	"While a PS Vita game or a PSP game is in front, storage runs at standard speed. The faster path carries on in the Home screen, Settings, the PlayStation Store and homebrew apps such as file managers. Recommended: games hand freshly loaded data straight to the graphics chip, the case the faster path is least proven in.",   /* engb */
+	"Önde bir PS Vita veya PSP oyunu varken depolama standart hızda çalışır. Hızlandırma ana ekranda, Ayarlar'da, PlayStation Store'da ve dosya yöneticileri gibi homebrew uygulamalarda sürer. Önerilir: oyunlar yeni yüklenen veriyi doğrudan grafik yongasına verir; bu, hızlandırmanın en az denenmiş olduğu durumdur.",   /* tr */
+},
+[TS_I18N_ST_MASTER_OFF] = {
+	"無効：上のスイッチでTurbo Storageがオフになっています。通常の速度。",   /* ja */
+	"Inactive: Turbo Storage is switched off above. Standard speed.",   /* en */
+	"Inactif : Turbo Storage est désactivé ci-dessus. Vitesse standard.",   /* fr */
+	"Inactivo: Turbo Storage está desactivado arriba. Velocidad estándar.",   /* es */
+	"Inaktiv: Turbo Storage ist oben ausgeschaltet. Normale Geschwindigkeit.",   /* de */
+	"Inattivo: Turbo Storage è disattivato qui sopra. Velocità standard.",   /* it */
+	"Inactief: Turbo Storage staat hierboven uit. Standaardsnelheid.",   /* nl */
+	"Inativo: o Turbo Storage está desligado acima. Velocidade padrão.",   /* pt */
+	"Неактивно: Turbo Storage выключен выше. Обычная скорость.",   /* ru */
+	"비활성: 위에서 Turbo Storage가 꺼져 있습니다. 표준 속도.",   /* ko */
+	"未啟用：上方已關閉 Turbo Storage。標準速度。",   /* zht */
+	"未启用：上方已关闭 Turbo Storage。标准速度。",   /* zhs */
+	"Ei käytössä: Turbo Storage on kytketty pois yllä. Normaalinopeus.",   /* fi */
+	"Inaktiv: Turbo Storage är avstängt ovan. Standardhastighet.",   /* sv */
+	"Inaktiv: Turbo Storage er slået fra ovenfor. Standardhastighed.",   /* da */
+	"Inaktiv: Turbo Storage er slått av ovenfor. Standardhastighet.",   /* no */
+	"Nieaktywne: Turbo Storage jest wyłączone powyżej. Standardowa szybkość.",   /* pl */
+	"Inativo: o Turbo Storage está desligado acima. Velocidade padrão.",   /* ptbr */
+	"Inactive: Turbo Storage is switched off above. Standard speed.",   /* engb */
+	"Etkin değil: Turbo Storage yukarıda kapalı. Standart hız.",   /* tr */
 },

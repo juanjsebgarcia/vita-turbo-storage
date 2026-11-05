@@ -82,79 +82,64 @@
 
   <!-- title, subtitle, firmware badge -->
   <text class="t" x="60" y="86"><tspan class="h1">Turbo Storage</tspan><tspan class="h1l"> for PS Vita</tspan></text>
-  <text class="t h2" x="60" y="122">A taiHEN plugin that speeds up SD2Vita, the Vita memory card and internal storage. Measured on hardware.</text>
+  <text class="t h2" x="60" y="122">A taiHEN plugin that speeds up SD2Vita and the Vita memory card. Measured on hardware.</text>
   <text class="t h2" x="60" y="152">A safer, more conservative approach than the withdrawn IOStaging plugin.</text>
   <rect x="898" y="52" width="242" height="42" rx="21" fill="#ffffff" fill-opacity="0.10" stroke="#ffffff" stroke-opacity="0.45"/>
   <text class="t badge" x="1019" y="79" text-anchor="middle">FIRMWARE 3.60–3.74</text>
 
   <!-- tiles -->
   <g>
-    <rect x="60" y="166" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="332" y="166" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="604" y="166" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="876" y="166" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="60" y="306" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="332" y="306" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="604" y="306" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="876" y="306" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="60" y="446" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="332" y="446" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="604" y="446" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
-    <rect x="876" y="446" width="264" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="60" y="166" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="424" y="166" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="788" y="166" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="60" y="306" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="424" y="306" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="788" y="306" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="60" y="446" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="424" y="446" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
+    <rect x="788" y="446" width="352" height="126" rx="18" fill="url(#tileFill)" stroke="url(#tileStroke)" stroke-width="1.2"/>
     <g stroke="#ffffff" stroke-opacity="0.35" stroke-width="1">
-      <line x1="80" y1="167" x2="304" y2="167"/>
-      <line x1="352" y1="167" x2="576" y2="167"/>
-      <line x1="624" y1="167" x2="848" y2="167"/>
-      <line x1="896" y1="167" x2="1120" y2="167"/>
-      <line x1="80" y1="307" x2="304" y2="307"/>
-      <line x1="352" y1="307" x2="576" y2="307"/>
-      <line x1="624" y1="307" x2="848" y2="307"/>
-      <line x1="896" y1="307" x2="1120" y2="307"/>
-      <line x1="80" y1="447" x2="304" y2="447"/>
-      <line x1="352" y1="447" x2="576" y2="447"/>
-      <line x1="624" y1="447" x2="848" y2="447"/>
-      <line x1="896" y1="447" x2="1120" y2="447"/>
+      <line x1="80" y1="167" x2="392" y2="167"/>
+      <line x1="444" y1="167" x2="756" y2="167"/>
+      <line x1="808" y1="167" x2="1120" y2="167"/>
+      <line x1="80" y1="307" x2="392" y2="307"/>
+      <line x1="444" y1="307" x2="756" y2="307"/>
+      <line x1="808" y1="307" x2="1120" y2="307"/>
+      <line x1="80" y1="447" x2="392" y2="447"/>
+      <line x1="444" y1="447" x2="756" y2="447"/>
+      <line x1="808" y1="447" x2="1120" y2="447"/>
     </g>
   </g>
 
   <g filter="url(#glow)">
     <text class="t big" x="82" y="222">+26%</text>
-    <text class="t big" x="354" y="222">+32%</text>
-    <text class="t big" x="626" y="222">+36%</text>
-    <text class="t big" x="898" y="222">0</text>
+    <text class="t big" x="446" y="222">+32%</text>
+    <text class="t big" x="810" y="222">0</text>
     <text class="t big" x="82" y="362">+36%</text>
-    <text class="t big" x="354" y="362">+10%</text>
-    <text class="t big" x="626" y="362">+11%</text>
-    <text class="t big" x="898" y="362">0</text>
+    <text class="t big" x="446" y="362">+10%</text>
+    <text class="t big" x="810" y="362">0</text>
     <text class="t big" x="82" y="502">−23%</text>
-    <text class="t big" x="354" y="502">−24%</text>
-    <text class="t big" x="626" y="502">−24%</text>
-    <text class="t big" x="898" y="502">100%</text>
+    <text class="t big" x="446" y="502">−24%</text>
+    <text class="t big" x="810" y="502">100%</text>
   </g>
 
   <text class="t lbl" x="82" y="252">SD2Vita reads</text>
   <text class="t sub" x="82" y="275">13.3 → 16.8 MB/s</text>
-  <text class="t lbl" x="354" y="252">Vita memory card reads</text>
-  <text class="t sub" x="354" y="275">10.5 → 13.8 MB/s</text>
-  <text class="t lbl" x="626" y="252">internal reads</text>
-  <text class="t sub" x="626" y="275">15.5 → 21.1 MB/s</text>
-  <text class="t lbl" x="898" y="252">differences from stock</text>
-  <text class="t sub" x="898" y="275">130,000+ transfers checked</text>
+  <text class="t lbl" x="446" y="252">Vita memory card reads</text>
+  <text class="t sub" x="446" y="275">10.5 → 13.8 MB/s</text>
+  <text class="t lbl" x="810" y="252">differences from stock</text>
+  <text class="t sub" x="810" y="275">130,000+ transfers checked</text>
   <text class="t lbl" x="82" y="392">SD2Vita writes</text>
   <text class="t sub" x="82" y="415">4.4 → 6.0 MB/s</text>
-  <text class="t lbl" x="354" y="392">Vita memory card writes</text>
-  <text class="t sub" x="354" y="415">9.1 → 10.0 MB/s</text>
-  <text class="t lbl" x="626" y="392">internal writes</text>
-  <text class="t sub" x="626" y="415">7.4 → 8.2 MB/s</text>
-  <text class="t lbl" x="898" y="392">writes held back</text>
-  <text class="t sub" x="898" y="415">each is on the card on return</text>
+  <text class="t lbl" x="446" y="392">Vita memory card writes</text>
+  <text class="t sub" x="446" y="415">9.1 → 10.0 MB/s</text>
+  <text class="t lbl" x="810" y="392">writes held back</text>
+  <text class="t sub" x="810" y="415">each is on the card on return</text>
   <text class="t lbl" x="82" y="532">SD2Vita read latency</text>
   <text class="t sub" x="82" y="555">9.8 → 7.6 ms per 128 KiB</text>
-  <text class="t lbl" x="354" y="532">Vita memory card latency</text>
-  <text class="t sub" x="354" y="555">12.2 → 9.3 ms per 128 KiB</text>
-  <text class="t lbl" x="626" y="532">internal read latency</text>
-  <text class="t sub" x="626" y="555">8.5 → 6.4 ms per 128 KiB</text>
-  <text class="t lbl" x="898" y="532">Sony's own drivers</text>
-  <text class="t sub" x="898" y="555">only the buffer changes</text>
+  <text class="t lbl" x="446" y="532">Vita memory card latency</text>
+  <text class="t sub" x="446" y="555">12.2 → 9.3 ms per 128 KiB</text>
+  <text class="t lbl" x="810" y="532">Sony's own drivers</text>
+  <text class="t sub" x="810" y="555">only the buffer changes</text>
   <text class="t sub" x="60" y="608">MB/s = megabytes per second (not megabits). Measured on one PS Vita (PCH-1000, 3.60); results depend on your cards.</text>
 </svg>

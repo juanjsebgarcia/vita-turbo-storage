@@ -12,7 +12,6 @@
 enum ts_i18n_id {
 	TS_I18N_TITLE = 0,          /* "Turbo Storage"                                */
 	TS_I18N_ROW_SD2VITA,        /* row titles                                     */
-	TS_I18N_ROW_INTERNAL,
 	TS_I18N_ROW_HUD,
 	TS_I18N_ROW_HUD_POS,
 	TS_I18N_ROW_DEVMODE,
@@ -20,7 +19,6 @@ enum ts_i18n_id {
 	TS_I18N_ROW_HUD_GAME,
 	TS_I18N_ROW_HUD_RECENT,
 	TS_I18N_HINT_SD2VITA,       /* help text, same order as the rows              */
-	TS_I18N_HINT_INTERNAL,
 	TS_I18N_HINT_HUD,
 	TS_I18N_HINT_HUD_POS,
 	TS_I18N_HINT_DEVMODE,
@@ -44,6 +42,11 @@ enum ts_i18n_id {
 	TS_I18N_ROW_SAFE,           /* "Safe mode" row, only while in safe mode     */
 	TS_I18N_HINT_SAFE,
 	TS_I18N_HINT_SAFE_LEFT,     /* its help once left, until the restart       */
+	TS_I18N_ROW_ENABLED,        /* master switch (0.4.0)                        */
+	TS_I18N_HINT_ENABLED,
+	TS_I18N_ROW_GAME_PAUSE,     /* "Pause in Vita games" (0.4.0)                */
+	TS_I18N_HINT_GAME_PAUSE,
+	TS_I18N_ST_MASTER_OFF,      /* added to a storage's help: master is off     */
 	TS_I18N_COUNT
 };
 
